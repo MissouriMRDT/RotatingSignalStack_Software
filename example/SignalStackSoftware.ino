@@ -4,6 +4,7 @@
 // #RoveSoHard                  /////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #include "SignalStackSoftware.h"
+#include <Wire.h>
 
 void setup()
 {
@@ -14,12 +15,15 @@ void setup()
     pinMode(COIL2_RVS, OUTPUT);
 
     // compass pins
-
+    Wire.setSDA(COMPASS_SDA);
+    Wire.setSCL(COMPASS_SCL);
 
     // GPS pins
-
+    pinMode(GPS_TX, OUTPUT);
+    pinMode(GPS_RX, INPUT);
 
     // Communication setup
+    Wire.begin();
     Serial.begin(115200);
     RoveComm.begin(RC_SIGNALSTACKBOARD_FOURTHOCTET, &TCPServer, RC_ROVECOMM_SIGNALSTACKBOARD_MAC);
     delay(100);
@@ -29,7 +33,18 @@ void setup()
 
 void loop()
 {
-    //code go brrr
+    packet = RoveComm.read();
+
+    switch (packet.data_id)
+    {
+        case RC_SIGNALSTACKBOARD_SIGNALSROTATE_DATA_ID:
+            motorSpeed = (int16_t)packet.data[0];
+            signalRotate(motorSpeed);
+            break;
+    }
+
+
+    
 }
 
 
