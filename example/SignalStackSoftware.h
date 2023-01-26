@@ -11,35 +11,44 @@ EthernetServer TCPServer(RC_ROVECOMM_SIGNALSTACKBOARD_PORT);
 
 
 
+
+
 ////// Pin Definitions /////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// motor pins
+#define COIL1_FWD       A0
+#define COIL1_RVS       A1
+#define COIL2_FWD       A6
+#define COIL2_RVS       A7
 
-// motor pin definitions
-#define COIL1_FWD   A0
-#define COIL1_RVS   A1
-#define COIL2_FWD   A6
-#define COIL2_RVS   A7
+// compass I2C pins
+#define COMPASS_SDA     A4
+#define COMPASS_SCL     A5
 
-// compass I2C pin definitions
-#define COMPASS_SDA A4
-#define COMPASS_SCL A5
-
-// GPS serial pin definitions
-#define GPS_RX      0
-#define GPS_TX      1
-
+// GPS serial pins
+#define GPS_RX          0
+#define GPS_TX          1
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
 
 
 
 ////// Variable Definitions ////////////////////////////////////////////////////////////////////////////////////////////////////////
-double SignalStackPosition;
-float SignalStackDirection;
-int16_t motorSpeed;
+double signalStackPosition;             //latitude and longitude
+float signalStackDirection;             //Compass angle in degrees
+int16_t motorSpeed;                     //Speed in decipercent (-1000, 1000)
+#define COMPASS_ADDRESS         0x0D    //I2C address for Matek M8Q-5883
+#define COMPASS_DATA_LENGTH     4       //bytes
+uint8_t compassBytes[4];
+uint8_t compassByte;
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
 
 
 
 ////// Function Definitions ////////////////////////////////////////////////////////////////////////////////////////////////////////
 void telemetry();
-int16_t signalRotate();
+void stackRotate(int16_t decipercent);
+void updateCompass();
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
