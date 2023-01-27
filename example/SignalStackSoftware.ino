@@ -8,6 +8,14 @@
 
 void setup()
 {
+    // Communication setup
+    Wire.begin();
+    Serial.begin(115200);
+    RoveComm.begin(RC_SIGNALSTACKBOARD_FOURTHOCTET, &TCPServer, RC_ROVECOMM_SIGNALSTACKBOARD_MAC);
+    delay(100);
+    Telemetry.begin(telemetry, 1500000);
+    Serial.println("Started: ");
+    
     // motor pins
     pinMode(COIL1_FWD, OUTPUT);
     pinMode(COIL1_RVS, OUTPUT);
@@ -19,17 +27,11 @@ void setup()
     Wire.setSCL(COMPASS_SCL);
 
     // GPS pins
-    pinMode(GPS_TX, OUTPUT);
-    pinMode(GPS_RX, INPUT);
-
-    // Communication setup
-    Wire.begin();
-    Serial.begin(115200);
-    RoveComm.begin(RC_SIGNALSTACKBOARD_FOURTHOCTET, &TCPServer, RC_ROVECOMM_SIGNALSTACKBOARD_MAC);
-    delay(100);
-    Telemetry.begin(telemetry, 1500000);
-    Serial.println("Started: ");
+    Serial.setRX(GPS_RX);
+    Serial.setTX(GPS_TX);
 }
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void loop()
 {
@@ -48,6 +50,7 @@ void loop()
     
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void telemetry()
 {
@@ -55,27 +58,30 @@ void telemetry()
     RoveComm.write(RC_SIGNALSTACKBOARD_SIGNALSDIRECTION_DATA_ID, RC_SIGNALSTACKBOARD_SIGNALSDIRECTION_DATA_COUNT, signalStackDirection);
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-
-
-
-void updateCompass();
+void updateCompass()   // This function looks like garbage, but I don't know how to make it look better
 {
     Wire.requestFrom(COMPASS_ADDRESS, COMPASS_DATA_LENGTH);
     compassByte = 0;
     while (Wire.available())
     {
-        compassBytes[compassByte] = Wire.read();
-        compassByte++;
+        compassBytes[(COMPASS_DATA_LENGTH - 1) - compassByte] = Wire.read();    // Selects leftmost element in array,
+        compassByte++;                                                          // (COMPASS_DATA_LENGTH - 1), and moves right
     }
     
     for (i = 0; i < COMPASS_DATA_LENGTH; i++)
     {
-        signalStackDirection += (compassBytes[i] << (8 * i));
+        signalStackDirection += (compassBytes[(COMPASS_DATA_LENGTH - 1) - i] << (8 * ((COMPASS_DATA_LENGTH - 1) - i)));
     }
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+void updateGPS()
+{
+
+}
 
 /*
 REQUIREMENTS:
