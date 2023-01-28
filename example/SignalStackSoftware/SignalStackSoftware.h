@@ -7,6 +7,8 @@ RoveCommEthernet RoveComm;
 rovecomm_packet packet;
 
 EthernetServer TCPServer(RC_ROVECOMM_SIGNALSTACKBOARD_PORT);
+
+IntervalTimer telemetry;
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
@@ -50,7 +52,7 @@ uint8_t compassByte;
 
 
 ////// Function Definitions ////////////////////////////////////////////////////////////////////////////////////////////////////////
-void telemetry();
+void Telemetry();
 void stackRotate(int16_t decipercent);
 void fwdRotate(uint8_t PWM);
 void rvsRotate(uint8_t PWM);

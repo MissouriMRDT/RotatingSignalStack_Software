@@ -12,11 +12,12 @@ void setup()
 {
     // Communication setup
     Wire.begin();
-    Serial.begin(115200);
+    Serial.begin(9600);
     RoveComm.begin(RC_SIGNALSTACKBOARD_FOURTHOCTET, &TCPServer, RC_ROVECOMM_SIGNALSTACKBOARD_MAC);
     delay(100);
-    Telemetry.begin(telemetry, 1500000);
+    telemetry.begin(Telemetry, 1500000);
     Serial.println("Started: ");
+    Serial1.begin(115200);
     
     // motor pins
     pinMode(COIL1_FWD, OUTPUT);
@@ -29,8 +30,8 @@ void setup()
     Wire.setSCL(COMPASS_SCL);
 
     // GPS pins
-    Serial.setRX(GPS_RX);
-    Serial.setTX(GPS_TX);
+    Serial1.setRX(GPS_RX);
+    Serial1.setTX(GPS_TX);
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -54,7 +55,7 @@ void loop()
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void telemetry()
+void Telemetry()
 {
     RoveComm.write(RC_SIGNALSTACKBOARD_SIGNALSPOSITION_DATA_ID, RC_SIGNALSTACKBOARD_SIGNALSPOSITION_DATA_COUNT, signalStackPosition);
     RoveComm.write(RC_SIGNALSTACKBOARD_SIGNALSDIRECTION_DATA_ID, RC_SIGNALSTACKBOARD_SIGNALSDIRECTION_DATA_COUNT, signalStackDirection);
@@ -72,7 +73,7 @@ void updateCompass()   // This function looks like garbage, but I don't know how
         compassByte++;                                                          // (COMPASS_DATA_LENGTH - 1), and moves right
     }
     
-    for (i = 0; i < COMPASS_DATA_LENGTH; i++)
+    for (uint8_t i = 0; i < COMPASS_DATA_LENGTH; i++)
     {
         signalStackDirection += (compassBytes[(COMPASS_DATA_LENGTH - 1) - i] << (8 * ((COMPASS_DATA_LENGTH - 1) - i)));
     }
@@ -82,7 +83,7 @@ void updateCompass()   // This function looks like garbage, but I don't know how
 
 void updateGPS()
 {
-    signalStackPosition = Serial.read(GPS_RX);
+    signalStackPosition = Serial1.read();
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
