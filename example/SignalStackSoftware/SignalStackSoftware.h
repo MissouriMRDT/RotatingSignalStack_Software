@@ -37,6 +37,8 @@ EthernetServer TCPServer(RC_ROVECOMM_SIGNALSTACKBOARD_PORT);
 double signalStackPosition;             //latitude and longitude
 float signalStackDirection;             //Compass angle in degrees
 int16_t motorSpeed;                     //Speed in decipercent (-1000, 1000)
+uint8_t fwdPWM;
+uint8_t rvsPWM;
 #define COMPASS_ADDRESS         0x0D    //I2C address for Matek M8Q-5883
 #define COMPASS_DATA_LENGTH     4       //bytes
 uint8_t compassBytes[4];
@@ -50,6 +52,8 @@ uint8_t compassByte;
 ////// Function Definitions ////////////////////////////////////////////////////////////////////////////////////////////////////////
 void telemetry();
 void stackRotate(int16_t decipercent);
+void fwdRotate(uint8_t PWM);
+void rvsRotate(uint8_t PWM);
 void updateCompass();
 void updateGPS();
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
