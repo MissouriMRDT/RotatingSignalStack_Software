@@ -99,7 +99,7 @@ void stackRotate(int16_t numSteps)  // Moves the motor a requested number of ste
             motorStep(motorPWM);
             if (!(stepCount % 4)) stepCount = 1;    // if on the 4th step, go back to 1
             else stepCount++;                       // these 2 lines cycle the stepCount from 1 to 4 to know which step the motor is on
-            delay(15);
+            delay(10);
         }
     }
 
@@ -110,7 +110,7 @@ void stackRotate(int16_t numSteps)  // Moves the motor a requested number of ste
             motorStep(motorPWM);
             if (stepCount==1) stepCount = 4;        // if on the 1st step, go back to 4
             else stepCount--;                       // these 2 lines cycle the stepCount from 4 to 1
-            delay(15);
+            delay(10);
         }
     }
 

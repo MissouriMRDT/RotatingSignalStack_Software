@@ -44,7 +44,7 @@ uint8_t compassBytes[4];
 uint8_t compassByte;
 
 #define STEP_ANGLE 0.12;                // degrees per step according to motor
-uint8_t motorPWM = 217;                 // approximately 90% duty cycle to not kill H bridges
+uint8_t motorPWM = 230;                 // approximately 90% duty cycle to not kill H bridges
 uint8_t stepCount = 0;                  // tracks what step the motor is on
 int16_t stepNumber;
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
