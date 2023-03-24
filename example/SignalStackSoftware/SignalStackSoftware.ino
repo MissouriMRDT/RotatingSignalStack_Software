@@ -123,8 +123,7 @@ void stackRotate(int16_t numSteps)  // Moves the motor a requested number of ste
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void motorStep(uint8_t PWM) // Writes to motor pins to perform appropriate step on the stepper motor
-{
-    /*
+{ 
     switch(stepCount)
     {
         case 1:
@@ -155,39 +154,6 @@ void motorStep(uint8_t PWM) // Writes to motor pins to perform appropriate step 
             analogWrite(COIL2_RVS, PWM);
             break;
     }
-    */
-   
-    switch(stepCount)
-    {
-        case 1:
-            analogWrite(COIL1_FWD, PWM);
-            analogWrite(COIL1_RVS, 0);
-            analogWrite(COIL2_FWD, PWM);
-            analogWrite(COIL2_RVS, 0);
-            break;
-        
-        case 2:
-            analogWrite(COIL1_FWD, 0);
-            analogWrite(COIL1_RVS, PWM);
-            analogWrite(COIL2_FWD, PWM);
-            analogWrite(COIL2_RVS, 0);
-            break;
-        
-        case 3:
-            analogWrite(COIL1_FWD, 0);
-            analogWrite(COIL1_RVS, PWM);
-            analogWrite(COIL2_FWD, 0);
-            analogWrite(COIL2_RVS, PWM);
-            break;
-        
-        case 4:
-            analogWrite(COIL1_FWD, PWM);
-            analogWrite(COIL1_RVS, 0);
-            analogWrite(COIL2_FWD, 0);
-            analogWrite(COIL2_RVS, PWM);
-            break;
-    }
-
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
