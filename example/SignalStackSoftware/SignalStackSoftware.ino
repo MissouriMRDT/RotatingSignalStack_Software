@@ -6,6 +6,7 @@
 #include "SignalStackSoftware.h"
 #include <Wire.h>
 #include <Stepper.cpp>
+#include <cmath>
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -48,7 +49,7 @@ void loop()
     {
         case RC_SIGNALSTACKBOARD_SIGNALSROTATE_DATA_ID:
             stepNumber = ((int16_t*) packet.data)[0];
-            Stepper::step(stepNumber);
+            stepperMotor.step(stepNumber);
             break;
     }
 
@@ -78,7 +79,7 @@ void loop()
         Serial.println("-------------");
         Serial.println();
     }
-    
+
     updateCompass();
     Telemetry();
 }
@@ -165,7 +166,20 @@ void GPSDump()
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void goToAngle(uint16_t deg)
+void goToAngle(float deg)
 {
-    // code go brrr
+    deltaAngle = signalStackDirection - deg;
+    while (deltaAngle > closedLoopMaxSSError)
+    {
+        requestedSteps = round(deltaAngle / STEP_ANGLE);
+        if  (requestedSteps > closedLoopStepNumber) stepperMotor.step(closedLoopStepNumber);
+        else stepperMotor.step(requestedSteps);
+        /*
+        Breaking up large movements is done to help account for nonlinearities and innacuracy in the step angle. 
+        Physical properties such as belt tension and friction can cause the signal stack to not move as far as you
+        would expect, so reevaluating how many steps are needed periodically can help make the overall movement a
+        little smoother.
+        */
+        deltaAngle = signalStackDirection - deg;
+    }
 }

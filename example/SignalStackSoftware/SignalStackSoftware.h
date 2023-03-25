@@ -53,7 +53,13 @@ uint8_t compassByte;                        // piece of compass data obtained ov
 // Movement
 const uint8_t stepDelay = 10;               // milliseconds
 const uint16_t stepsPerRevolution = 3150;   // 360deg / 1.8deg step angle / 15.75 gear reduction
+#define STEP_ANGLE  0.11428571428           // 1.8deg / 15.75 gear reduction
 int16_t stepNumber;                         // number of steps to take, set by rovecomm command
+float requestedAngle;                       // direction to point signal stack in requested over RoveComm
+uint16_t requestedSteps;                    // steps needed to get to requested angle
+float deltaAngle;                           // difference between current angle and desired angle
+uint16_t closedLoopStepNumber = 200;        // number of steps to take before reevaluating number needed
+float closedLoopMaxSSError = 0.5;           // Steady state error in degrees allowed by closed loop operation
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
@@ -61,9 +67,9 @@ int16_t stepNumber;                         // number of steps to take, set by r
 
 
 ////// Function Definitions ////////////////////////////////////////////////////////////////////////////////////////////////////////
-void Telemetry();
-void updateCompass();
-void updateGPS();
-void GPSDump(TinyGPS &gps);
-void goToAngle(uint16_t degrees);
+void Telemetry();               // sends position and direction data over RoveComm
+void updateCompass();           // gets new compass data to send over RoveComm
+void updateGPS();               // gets new GPS data to send over RoveComm
+void GPSDump(TinyGPS &gps);     // gets new GPS data and writes it to Serial monitor
+void goToAngle(float degrees);  // sends signal stack to direction from 0 to 360 degrees
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
