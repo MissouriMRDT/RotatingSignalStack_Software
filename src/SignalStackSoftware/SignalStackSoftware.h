@@ -12,7 +12,7 @@ IntervalTimer telemetry;
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-
+#include <TinyGPS.h>
 
 
 ////// Pin Definitions /////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -50,7 +50,7 @@ float signalStackDirection;                 // Compass angle in degrees
 uint8_t compassBytes[COMPASS_DATA_LENGTH];  // total compass data as an array
 uint8_t compassByte;                        // piece of compass data obtained over I2C
 
-// Movement
+// Rotation
 const uint8_t stepDelay = 10;               // milliseconds
 const uint16_t stepsPerRevolution = 3150;   // 360deg / 1.8deg step angle / 15.75 gear reduction
 #define STEP_ANGLE  0.11428571428           // 1.8deg / 15.75 gear reduction
@@ -58,7 +58,7 @@ int16_t stepNumber;                         // number of steps to take, set by r
 float requestedAngle;                       // direction to point signal stack in requested over RoveComm
 uint16_t requestedSteps;                    // steps needed to get to requested angle
 float deltaAngle;                           // difference between current angle and desired angle
-uint16_t closedLoopStepNumber = 200;        // number of steps to take before reevaluating number needed
+uint16_t closedLoopStepNumber = 250;        // number of steps to take before reevaluating number needed
 float closedLoopMaxSSError = 0.5;           // Steady state error in degrees allowed by closed loop operation
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -71,5 +71,5 @@ void Telemetry();               // sends position and direction data over RoveCo
 void updateCompass();           // gets new compass data to send over RoveComm
 void updateGPS();               // gets new GPS data to send over RoveComm
 void GPSDump(TinyGPS &gps);     // gets new GPS data and writes it to Serial monitor
-void goToAngle(float degrees);  // sends signal stack to direction from 0 to 360 degrees
+void goToAngle(float deg);  // sends signal stack to direction from 0 to 360 degrees
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

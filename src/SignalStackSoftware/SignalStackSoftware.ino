@@ -1,12 +1,15 @@
-// Signal Stack Board Software  /////////////////////////////////////////////////////////////////////////////////////////////////////
+
+  // Signal Stack Board Software  /////////////////////////////////////////////////////////////////////////////////////////////////////
 // MRDT 2023                    /////////////////////////////////////////////////////////////////////////////////////////////////////
 // Grant Brinker                /////////////////////////////////////////////////////////////////////////////////////////////////////
 // #RoveSoHard                  /////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #include "SignalStackSoftware.h"
 #include <Wire.h>
-#include <Stepper.cpp>
+#include "Stepper.h"
 #include <cmath>
+
+Stepper stepperMotor(stepsPerRevolution, COIL1_FWD, COIL1_RVS, COIL2_FWD, COIL2_RVS);
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -22,11 +25,6 @@ void setup()
     GPS_SERIAL.begin(GPS_SERIAL_BAUD);
     
     // motor pins
-    pinMode(COIL1_FWD, OUTPUT);
-    pinMode(COIL1_RVS, OUTPUT);
-    pinMode(COIL2_FWD, OUTPUT);
-    pinMode(COIL2_RVS, OUTPUT);
-    Stepper stepperMotor(stepsPerRevolution, COIL1_FWD, COIL1_RVS, COIL2_FWD, COIL2_RVS);
     stepperMotor.setSpeed(stepDelay);
 
     // compass pins
@@ -74,7 +72,7 @@ void loop()
     {
         Serial.println("Acquired Data");
         Serial.println("-------------");
-        gpsDump();
+        GPSDump();
         updateGPS();
         Serial.println("-------------");
         Serial.println();
