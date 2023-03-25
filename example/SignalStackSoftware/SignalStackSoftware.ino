@@ -5,12 +5,12 @@
 
 #include "SignalStackSoftware.h"
 #include <Wire.h>
+#include <Stepper.cpp>
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void setup()
 {
-    
     // Communication setup
     Wire.begin();
     Serial.begin(9600);
@@ -25,6 +25,8 @@ void setup()
     pinMode(COIL1_RVS, OUTPUT);
     pinMode(COIL2_FWD, OUTPUT);
     pinMode(COIL2_RVS, OUTPUT);
+    Stepper stepperMotor(stepsPerRevolution, COIL1_FWD, COIL1_RVS, COIL2_FWD, COIL2_RVS);
+    stepperMotor.setSpeed(stepDelay);
 
     // compass pins
     Wire.setSDA(COMPASS_SDA);
@@ -46,7 +48,7 @@ void loop()
     {
         case RC_SIGNALSTACKBOARD_SIGNALSROTATE_DATA_ID:
             stepNumber = ((int16_t*) packet.data)[0];
-            stackRotate(stepNumber);
+            Stepper::step(stepNumber);
             break;
     }
 
@@ -90,71 +92,7 @@ void updateGPS()    // Obtains new GPS data
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void stackRotate(int16_t numSteps)  // Moves the motor a requested number of steps; positive = forward, negative = backward
-{   
-    if (numSteps>0)
-    {
-        for (uint16_t i=0; i<numSteps; i++)
-        {
-            motorStep(motorPWM);
-            if (!(stepCount % 4)) stepCount = 1;    // if on the 4th step, go back to 1
-            else stepCount++;                       // these 2 lines cycle the stepCount from 1 to 4 to know which step the motor is on
-            delay(10);
-        }
-    }
 
-    if (numSteps<0)
-    {
-        for (uint16_t i=0; i<(-numSteps); i++)
-        {
-            motorStep(motorPWM);
-            if (stepCount==1) stepCount = 4;        // if on the 1st step, go back to 4
-            else stepCount--;                       // these 2 lines cycle the stepCount from 4 to 1
-            delay(10);
-        }
-    }
-
-    analogWrite(COIL1_FWD, 0);
-    analogWrite(COIL1_RVS, 0);
-    analogWrite(COIL2_FWD, 0);
-    analogWrite(COIL2_RVS, 0);
-}
-
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-void motorStep(uint8_t PWM) // Writes to motor pins to perform appropriate step on the stepper motor
-{ 
-    switch(stepCount)
-    {
-        case 1:
-            analogWrite(COIL1_FWD, PWM);
-            analogWrite(COIL1_RVS, 0);
-            analogWrite(COIL2_FWD, PWM);
-            analogWrite(COIL2_RVS, 0);
-            break;
-        
-        case 2:
-            analogWrite(COIL1_FWD, 0);
-            analogWrite(COIL1_RVS, PWM);
-            analogWrite(COIL2_FWD, PWM);
-            analogWrite(COIL2_RVS, 0);
-            break;
-        
-        case 3:
-            analogWrite(COIL1_FWD, 0);
-            analogWrite(COIL1_RVS, PWM);
-            analogWrite(COIL2_FWD, 0);
-            analogWrite(COIL2_RVS, PWM);
-            break;
-        
-        case 4:
-            analogWrite(COIL1_FWD, PWM);
-            analogWrite(COIL1_RVS, 0);
-            analogWrite(COIL2_FWD, 0);
-            analogWrite(COIL2_RVS, PWM);
-            break;
-    }
-}
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 

@@ -36,17 +36,15 @@ IntervalTimer telemetry;
 
 
 ////// Variable Definitions ////////////////////////////////////////////////////////////////////////////////////////////////////////
-double signalStackPosition;             // latitude and longitude
-float signalStackDirection;             // Compass angle in degrees
-#define COMPASS_ADDRESS         0x0D    // I2C address for Matek M8Q-5883
-#define COMPASS_DATA_LENGTH     4       // number of bytes required to hold compass data
-uint8_t compassBytes[4];
-uint8_t compassByte;
-
-#define STEP_ANGLE 0.12;                // degrees per step according to motor
-uint8_t motorPWM = 230;                 // approximately 90% duty cycle to not kill H bridges
-uint8_t stepCount = 0;                  // tracks what step the motor is on
-int16_t stepNumber;
+double signalStackPosition;                 // latitude and longitude
+float signalStackDirection;                 // Compass angle in degrees
+#define COMPASS_ADDRESS         0x0D        // I2C address for Matek M8Q-5883
+#define COMPASS_DATA_LENGTH     4           // number of bytes required to hold compass data
+uint8_t compassBytes[4];    
+uint8_t compassByte;    
+const uint8_t stepDelay = 10;               // milliseconds
+const uint16_t stepsPerRevolution = 3150;   // 360deg / 1.8deg step angle / 15.75 gear reduction
+int16_t stepNumber;                         // number of steps to take, set by rovecomm command
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
@@ -55,8 +53,6 @@ int16_t stepNumber;
 
 ////// Function Definitions ////////////////////////////////////////////////////////////////////////////////////////////////////////
 void Telemetry();
-void stackRotate(int16_t numSteps);
-void motorStep(uint8_t PWM);
 void updateCompass();
 void updateGPS();
 void goToAngle(uint16_t degrees);
