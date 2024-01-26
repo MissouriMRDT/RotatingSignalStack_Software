@@ -7,6 +7,8 @@
 
 // Variable definitions
 #define comp_address    0x01    // this is a placeholder value; need to scan to get the actual address
+#define num_bytes
+uint8_t data;
 
 
 #endif
