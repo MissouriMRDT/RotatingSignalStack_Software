@@ -2,11 +2,11 @@
 #define SIGNALSTACKSOFTWARE_H
 #include "PinAssignments.h"
 #include "RoveHBridge.h"
-#include "HMC5883L.h"
+#include <QMC5883LCompass.h>
 
 RoveHBridge Motor(HB_FWD, HB_RVS);
 
-HMC5883L Compass;
+QMC5883LCompass Compass;
 
 //RoveComm Initialization
 #include "RoveComm.h"
@@ -24,6 +24,7 @@ void haultMotors();
 
 int16_t motorSpeed = 0;
 
+uint16_t azimuth = 0;
 uint16_t compassAngle = 0;
 
 // Watchdog

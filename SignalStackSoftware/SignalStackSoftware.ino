@@ -30,8 +30,8 @@ void setup()
 
     //Compass
     Wire.begin();
-    Compass.initCompass();
-    Compass.setScale(0.88);
+    Compass.init();
+    //Compass.setScale(0.88);
 }
 
 void loop()
@@ -54,6 +54,12 @@ void loop()
         }
     }
 
+    //Compass
+    Compass.read();
+    byte azimuth = Compass.getAzimuth();
+    // Output here will be a value from 0 - 15 based on the direction of the bearing / azimuth.
+    byte compassAngle = Compass.getBearing(azimuth);
+    
     Motor.drive(motorSpeed);
 
     if (Watchdog.IntervalTimer = 0) {
