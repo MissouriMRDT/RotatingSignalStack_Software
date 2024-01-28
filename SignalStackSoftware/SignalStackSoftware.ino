@@ -11,7 +11,7 @@ void setup()
     Serial.begin(9600);
     //RoveComm.begin(RC_SIGNALSTACKBOARD_FIRSTOCTET, RC_SIGNALSTACKBOARD_SECONDOCTET, RC_SIGNALSTACKBOARD_THIRDOCTET, RC_SIGNALSTACKBOARD_FOURTHOCTET, &TCPServer);
     Telemetry.begin(telemetry, 1500000);
-
+    
     //IO PINS
     pinMode(JOG_A, INPUT);
     pinMode(JOG_B, INPUT);
@@ -44,12 +44,36 @@ void loop()
     {
         //case RC_SIGNALSTACKBOARD_OPENLOOP_DATA_ID: {
             //motorSpeed = *((int16_t*) packet.data);
+            feedWatchdog();
         //}
+
+        case RC_SIGNALSTACKBOARD_WATCHDOGOVERRIDE_DATA_ID:
+        {
+            uint8_t watchdogOverride = ((uint8_t*) packet.data)[0];
+            break;
+        }
     }
 
     Motor.drive(motorSpeed);
+
+    if (Watchdog.IntervalTimer = 0) {
+        watchdogStarved = 1;
+        haultMotors();
+    }
 }
 
 void telemetry() {
+    RoveComm.write(RC_SIGNALSTACKBOARD_WATCHDOGSTATUS_DATA_ID, RC_SIGNALSTACKBOARD_WATCHDOGSTATUS_DATA_COUNT, watchdogStarved);
+    RoveComm.write(RC_SIGNALSTACKBOARD_COMPASSANGLE_DATA_ID, RC_SIGNALSTACKBOARD_COMPASSANGLE_DATA_COUNT, compassAngle);
+}
 
+void feedWatchdog() {
+    watchdogStarved = 0;
+    Watchdog.begin(haultMotors, WATCHDOG_TIMEOUT);
+}
+
+void haultMotors() {
+    if (watchdogOverride == false) {
+        //Turn off motors
+    }
 }

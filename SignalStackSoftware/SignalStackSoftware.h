@@ -19,15 +19,17 @@ EthernetServer TCPServer(RC_ROVECOMM_ETHERNET_TCP_PORT);
 IntervalTimer Telemetry;
 
 void telemetry();
+void feedWatchdog();
+void haultMotors();
 
 int16_t motorSpeed = 0;
 
-void watchdog() {
-    
-}
+uint16_t compassAngle = 0;
 
-void feedWatchdog() {
-    
-}
+// Watchdog
+#define WATCHDOG_TIMEOUT 300000
+IntervalTimer Watchdog;
+uint8_t watchdogStarved = 0;
+bool watchdogOverride = false;
 
 #endif //SIGNALSTACKSOFTWARE_H
