@@ -24,13 +24,12 @@ void haultMotors();
 
 int16_t motorSpeed = 0;
 
-uint16_t azimuth = 0;
 uint16_t compassAngle = 0;
 
 // Watchdog
 #define WATCHDOG_TIMEOUT 300000
 IntervalTimer Watchdog;
 uint8_t watchdogStarved = 0;
-bool watchdogOverride = false;
+uint8_t watchdogOverride = 0;
 
 #endif //SIGNALSTACKSOFTWARE_H

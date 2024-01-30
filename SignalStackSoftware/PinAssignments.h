@@ -1,8 +1,8 @@
 #ifndef PINASSIGNMENTS_H
 #define PINASSIGNMENTS_H
 
-#define JOG_A 0
-#define JOG_B 1
+#define JOG_FWD 0 //JOG_A
+#define JOG_RVS 1 //JOG_B
 
 #define SCL 16
 #define SDA 17

@@ -1,5 +1,4 @@
 #include "SignalStackSoftware.h"
-#include <Wire.h>
 
 void setup()
 {
@@ -13,8 +12,8 @@ void setup()
     Telemetry.begin(telemetry, 1500000);
     
     //IO PINS
-    pinMode(JOG_A, INPUT);
-    pinMode(JOG_B, INPUT);
+    pinMode(JOG_FWD, INPUT);
+    pinMode(JOG_RVS, INPUT);
     pinMode(SCL, OUTPUT);
     pinMode(SDA, INPUT);
     pinMode(MAG_ENABLE, OUTPUT);
@@ -29,9 +28,7 @@ void setup()
     Motor.configRampRate(1000);
 
     //Compass
-    Wire.begin();
     Compass.init();
-    //Compass.setScale(0.88);
 }
 
 void loop()
@@ -42,30 +39,33 @@ void loop()
     Serial.println(Compass.getCompass());
     switch (packet.data_id)
     {
-        //case RC_SIGNALSTACKBOARD_OPENLOOP_DATA_ID: {
-            //motorSpeed = *((int16_t*) packet.data);
+        case RC_SIGNALSTACKBOARD_OPENLOOP_DATA_ID: {
+            motorSpeed = *((int16_t*) packet.data);
             feedWatchdog();
-        //}
+        }
 
         case RC_SIGNALSTACKBOARD_WATCHDOGOVERRIDE_DATA_ID:
         {
-            uint8_t watchdogOverride = ((uint8_t*) packet.data)[0];
+            watchdogOverride = ((uint8_t*) packet.data)[0];
             break;
         }
     }
 
     //Compass
     Compass.read();
-    byte azimuth = Compass.getAzimuth();
     // Output here will be a value from 0 - 15 based on the direction of the bearing / azimuth.
-    byte compassAngle = Compass.getBearing(azimuth);
+    compassAngle = Compass.getAzimuth();
     
-    Motor.drive(motorSpeed);
-
-    if (Watchdog.IntervalTimer = 0) {
-        watchdogStarved = 1;
-        haultMotors();
+    //Buttons
+    if (digitalRead(JOG_FWD)) {
+        motorSpeed = 300;
     }
+    
+    else if (digitalRead(JOG_RVS)) {
+        motorSpeed = -300;
+    }
+
+    Motor.drive(motorSpeed);
 }
 
 void telemetry() {
@@ -79,7 +79,8 @@ void feedWatchdog() {
 }
 
 void haultMotors() {
-    if (watchdogOverride == false) {
-        //Turn off motors
+    if (watchdogOverride == 0) {
+        motorSpeed = 0;
+        Motor.drive(0);
     }
 }
