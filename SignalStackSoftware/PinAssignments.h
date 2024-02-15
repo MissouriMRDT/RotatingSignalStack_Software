@@ -4,8 +4,7 @@
 #define JOG_FWD 0 //JOG_A
 #define JOG_RVS 1 //JOG_B
 
-#define SCL 16
-#define SDA 17
+//Use I2C port Wire1 for compass module
 #define MAG_ENABLE 18
 
 #define HB_FWD 37

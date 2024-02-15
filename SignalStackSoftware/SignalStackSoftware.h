@@ -3,14 +3,13 @@
 #include "PinAssignments.h"
 #include "RoveHBridge.h"
 #include <QMC5883LCompass.h>
+#include "RoveComm.h"
 
 RoveHBridge Motor(HB_FWD, HB_RVS);
 
 QMC5883LCompass Compass;
 
 //RoveComm Initialization
-#include "RoveComm.h"
-
 RoveCommEthernet RoveComm;
 rovecomm_packet packet;
 
@@ -24,7 +23,7 @@ void haultMotors();
 
 int16_t motorSpeed = 0;
 
-uint16_t compassAngle = 0;
+float compassAngle = 0;
 
 // Watchdog
 #define WATCHDOG_TIMEOUT 300000

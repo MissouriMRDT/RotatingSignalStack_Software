@@ -1,25 +1,19 @@
 #include "SignalStackSoftware.h"
+#include <Arduino.h>
 
 void setup()
 {
     //Serial Debugger
     Serial.begin(115200);
     Serial.println("Rotating Signal Stack Setup");
-
-    // Communication setup
-    Serial.begin(9600);
-    //RoveComm.begin(RC_SIGNALSTACKBOARD_FIRSTOCTET, RC_SIGNALSTACKBOARD_SECONDOCTET, RC_SIGNALSTACKBOARD_THIRDOCTET, RC_SIGNALSTACKBOARD_FOURTHOCTET, &TCPServer);
-    Telemetry.begin(telemetry, 1500000);
     
     //IO PINS
     pinMode(JOG_FWD, INPUT);
     pinMode(JOG_RVS, INPUT);
-    pinMode(SCL, OUTPUT);
-    pinMode(SDA, INPUT);
-    pinMode(MAG_ENABLE, OUTPUT);
+    //pinMode(MAG_ENABLE, OUTPUT);
     pinMode(HB_FWD, OUTPUT);
     pinMode(HB_RVS, OUTPUT);
-    pinMode(COMP_PWR, OUTPUT);
+    //pinMode(COMP_PWR, OUTPUT);
 
     //Motor
     Motor.configInvert(false);
@@ -29,19 +23,22 @@ void setup()
 
     //Compass
     Compass.init();
+
+    // Communication setup
+    RoveComm.begin(RC_SIGNALSTACKBOARD_FIRSTOCTET, RC_SIGNALSTACKBOARD_SECONDOCTET, RC_SIGNALSTACKBOARD_THIRDOCTET, RC_SIGNALSTACKBOARD_FOURTHOCTET, &TCPServer);
+    Telemetry.begin(telemetry, 1000000);
 }
 
 void loop()
 {
     // Receive RoveComm commands
-    //packet = RoveComm.read();
-    
-    Serial.println(Compass.getCompass());
+    packet = RoveComm.read();
     switch (packet.data_id)
     {
         case RC_SIGNALSTACKBOARD_OPENLOOP_DATA_ID: {
             motorSpeed = *((int16_t*) packet.data);
             feedWatchdog();
+            break;
         }
 
         case RC_SIGNALSTACKBOARD_WATCHDOGOVERRIDE_DATA_ID:
@@ -55,17 +52,20 @@ void loop()
     Compass.read();
     // Output here will be a value from 0 - 15 based on the direction of the bearing / azimuth.
     compassAngle = Compass.getAzimuth();
+    if (compassAngle < 0) {
+      compassAngle += 360;
+    }
     
     //Buttons
     if (digitalRead(JOG_FWD)) {
-        motorSpeed = 300;
+        Motor.drive(300);
     }
-    
     else if (digitalRead(JOG_RVS)) {
-        motorSpeed = -300;
+        Motor.drive(-300);
     }
-
-    Motor.drive(motorSpeed);
+    else {
+        Motor.drive(motorSpeed);
+    }
 }
 
 void telemetry() {
