@@ -2,7 +2,7 @@
 #define SIGNALSTACKSOFTWARE_H
 #include "PinAssignments.h"
 #include "RoveHBridge.h"
-#include <QMC5883LCompass.h>
+#include "QMC5883LCompass.h"
 #include "RoveComm.h"
 
 RoveHBridge Motor(HB_FWD, HB_RVS);
