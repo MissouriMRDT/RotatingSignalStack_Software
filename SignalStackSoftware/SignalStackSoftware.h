@@ -20,10 +20,15 @@ IntervalTimer Telemetry;
 void telemetry();
 void feedWatchdog();
 void haultMotors();
+bool softLimit(bool dir);
 
 int16_t motorSpeed = 0;
 
 float compassAngle = 0;
+
+float targetAngle = 0;
+
+bool closedLoopActive = false;
 
 // Watchdog
 #define WATCHDOG_TIMEOUT 300000

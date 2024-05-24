@@ -37,6 +37,7 @@ void loop()
     {
         case RC_SIGNALSTACKBOARD_OPENLOOP_DATA_ID: {
             motorSpeed = *((int16_t*) packet.data);
+            closedLoopActive = false;
             feedWatchdog();
             break;
         }
@@ -44,6 +45,14 @@ void loop()
         case RC_SIGNALSTACKBOARD_WATCHDOGOVERRIDE_DATA_ID:
         {
             watchdogOverride = ((uint8_t*) packet.data)[0];
+            break;
+        }
+
+        case RC_SIGNALSTACKBOARD_SETANGLETARGET_DATA_ID:
+        {
+            targetAngle = *((float*) packet.data);
+            closedLoopActive = true;
+            feedWatchdog();
             break;
         }
     }
@@ -56,16 +65,49 @@ void loop()
       compassAngle += 360;
     }
     
-    //Buttons
-    if (digitalRead(JOG_FWD)) {
-        Motor.drive(300);
-    }
-    else if (digitalRead(JOG_RVS)) {
-        Motor.drive(-300);
-    }
-    else {
-        Motor.drive(motorSpeed);
-    }
+
+    // if (!closedLoopActive) {
+    //     // //Buttons
+    //     // if (digitalRead(JOG_FWD)) {
+    //     //     if (softLimit(true)) {
+    //     //         Motor.drive(300);
+    //     //     }
+    //     // }
+    //     // else if (digitalRead(JOG_RVS)) {
+    //     //     if (softLimit(false)) {
+    //     //         Motor.drive(-300);
+    //     //     }
+    //     // }
+    //     // else {
+    //     //     Motor.drive(motorSpeed);
+    //     // }
+    // } else {
+
+        //Drive motor based on compass
+        float D = compassAngle - targetAngle;
+
+        if (abs(D) > 2) {
+            if (D > 0) {
+                if (D <= 180) {
+                    Motor.drive(-300);
+                } else {
+                    Motor.drive(300);
+                }
+            } else {
+                if (abs(D) <= 180) {
+                    Motor.drive(300);
+                } else {
+                    Motor.drive(-300);
+                }
+            }
+        } else {
+            Motor.drive(0);
+        }
+
+    // }
+
+
+    
 }
 
 void telemetry() {
@@ -84,3 +126,14 @@ void haultMotors() {
         Motor.drive(0);
     }
 }
+
+// bool softLimit(bool dir) {
+//     //Direction: true: fwd   false: rev
+//     //true: motor can move   false: motor cannot move
+//     // if ((compassAngle > 315) || (compassAngle < 270)) {
+//     //     return dir? true : false;
+//     // } else {
+//     //     return dir? false : true;
+//     // }
+//     return true;
+// }
