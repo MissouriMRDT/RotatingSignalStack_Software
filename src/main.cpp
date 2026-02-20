@@ -49,6 +49,8 @@ void setup()
   Serial.println("Complete");
 }
 
+int32_t position = 0;
+
 void loop()
 {
 
@@ -61,7 +63,7 @@ void loop()
     Serial.printf("open loop %i\n", packet.i16data[0]);
     if (packet.i16data[0] < 0)
     {
-      analogWriteFrequency(STP_PIN, map(packet.i16data[0], -1000, 0, 1000, 0));
+      analogWriteFrequency(STP_PIN, -packet.i16data[0]);
       analogWrite(STP_PIN, 128);
       digitalWrite(DIR_PIN, HIGH);
       // int16_t reverseSpeed = -packet.i16data[0];
@@ -73,7 +75,7 @@ void loop()
     }
     else if (packet.i16data[0] > 0)
     {
-      analogWriteFrequency(STP_PIN, map(packet.i16data[0], 0, 1000, 0, 1000));
+      analogWriteFrequency(STP_PIN, packet.i16data[0]);
       analogWrite(STP_PIN, 128);
       digitalWrite(DIR_PIN, LOW);
       //  stepper.reverseDir(false);
@@ -95,6 +97,16 @@ void loop()
     float degreesToMove = packet.fdata[0];
     float stepsPerDegree = STEPS / 360.0;
     int32_t steps = (int32_t)roundf(degreesToMove * stepsPerDegree);
+    // analogWriteFrequency(STP_PIN, map(packet.i16data[0], 0, 1000, 0, 1000));
+    // analogWrite(STP_PIN, steps);
+    digitalWrite(DIR_PIN, HIGH);
+    for (int i = 0; i < steps; i++)
+    {
+      digitalWrite(DIR_PIN, HIGH);
+      delay(1);
+      digitalWrite(DIR_PIN, LOW);
+      delay(1);
+    }
     // stepper.setIncrements(steps);
     //  stepper.setIncrementsRelative(steps);
     feedWatchdog();
