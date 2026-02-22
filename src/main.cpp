@@ -4,15 +4,51 @@
 
 // the number of steps on your motor
 #define STEPS 200
-
+#if defined(ARDUINO_TEENSY)
 #define STP_PIN 15
 #define DIR_PIN 14
 #define EN_PIN 16
+#define COMPASS_SDA
+#define COMPASS_SCL
+#elif defined(ARDUINO_WIZNET_5500_EVB_PICO)
+#define DIR_PIN 2
+#define STP_PIN 1
+#define EN_PIN 4
+#define COMPASS_SDA 6
+#define COMPASS_SCL 7
+#endif
 
 RoveCommPacket packet;
 RoveCommEthernet RoveComm;
 
-#define WATCHDOG_TIMEOUT 100000
+#ifdef ARDUINO_WIZNET_5500_EVB_PICO
+// Hacky way to spoof teensyduino on pi pico
+#define analogWriteFrequency(pin, freq) analogWriteFreq(freq)
+class IntervalTimer {
+private:
+  uint32_t nextTick = 0;
+  uint32_t timeoutMicros = 1000000;
+  void (*callback)() = nullptr;
+public:
+  void begin(void (*callback)(), uint32_t timeoutMicros) {
+    this->callback = callback;
+    this->timeoutMicros = timeoutMicros;
+    nextTick = micros() + timeoutMicros;
+  }
+  void end() {
+    callback = nullptr;
+  }
+  void update() {
+    if (callback == nullptr) return;
+    if (micros() >= nextTick) {
+      callback();
+      nextTick += timeoutMicros;
+    }
+  }
+};
+#endif
+
+#define WATCHDOG_TIMEOUT 1000000
 IntervalTimer Watchdog;
 uint8_t watchdogStatus = 0;
 uint8_t watchdogOverride = 0;
@@ -41,6 +77,9 @@ void setup()
   digitalWrite(DIR_PIN, HIGH);
   pinMode(STP_PIN, OUTPUT);
   analogWriteFrequency(STP_PIN, 100);
+#if ARDUINO_WIZNET_5500_EVB_PICO
+  analogWriteRange(255);
+#endif
   pinMode(EN_PIN, OUTPUT);
   digitalWrite(EN_PIN, LOW);
   // RoveComm Initialization
@@ -60,7 +99,8 @@ void loop()
   {
   case RC_SIGNALSTACKBOARD_OPENLOOP_DATA_ID:
   {
-    Serial.printf("open loop %i\n", packet.i16data[0]);
+    Serial.print("open loop ");
+    Serial.println(packet.i16data[0]);
     if (packet.i16data[0] < 0)
     {
       analogWriteFrequency(STP_PIN, -packet.i16data[0]);
@@ -126,6 +166,9 @@ void loop()
     //   break;
     // }
   }
+#if ARDUINO_WIZNET_5500_EVB_PICO
+  Watchdog.update();
+#endif
 }
 // #include "arduino.h"
 // #include <Wire.h>
