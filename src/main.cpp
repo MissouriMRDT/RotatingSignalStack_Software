@@ -4,7 +4,7 @@
 
 // the number of steps on your motor
 #define STEPS 200
-#if defined(ARDUINO_TEENSY)
+#if defined(ARDUINO_TEENSY41)
 #define STP_PIN 15
 #define DIR_PIN 14
 #define EN_PIN 16
@@ -13,7 +13,7 @@
 #elif defined(ARDUINO_WIZNET_5500_EVB_PICO)
 #define DIR_PIN 2
 #define STP_PIN 1
-#define EN_PIN 4
+#define EN_PIN 0
 #define COMPASS_SDA 6
 #define COMPASS_SCL 7
 #endif
