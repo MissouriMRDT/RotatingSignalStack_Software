@@ -1,6 +1,7 @@
 #include <Arduino.h>
 #include <StepperMC.h>
 #include <RoveComm.h>
+#include <Wire.h>
 
 // the number of steps on your motor
 #define STEPS 200
@@ -24,29 +25,67 @@ RoveCommEthernet RoveComm;
 #ifdef ARDUINO_WIZNET_5500_EVB_PICO
 // Hacky way to spoof teensyduino on pi pico
 #define analogWriteFrequency(pin, freq) analogWriteFreq(freq)
-class IntervalTimer {
+class IntervalTimer
+{
 private:
   uint32_t nextTick = 0;
   uint32_t timeoutMicros = 1000000;
   void (*callback)() = nullptr;
+
 public:
-  void begin(void (*callback)(), uint32_t timeoutMicros) {
+  void begin(void (*callback)(), uint32_t timeoutMicros)
+  {
     this->callback = callback;
     this->timeoutMicros = timeoutMicros;
     nextTick = micros() + timeoutMicros;
   }
-  void end() {
+  void end()
+  {
     callback = nullptr;
   }
-  void update() {
-    if (callback == nullptr) return;
-    if (micros() >= nextTick) {
+  void update()
+  {
+    if (callback == nullptr)
+      return;
+    if (micros() >= nextTick)
+    {
       callback();
       nextTick += timeoutMicros;
     }
   }
 };
 #endif
+
+// void setup() {
+//   Serial.begin(9600);
+//   while (!Serial) { }
+//   Serial.println();
+//   Serial.println("I2C scanner. Scanning ...");
+//   byte count = 0;
+//   Wire.begin();
+//   for (byte i = 8; i < 120; i++) {
+//     Wire.beginTransmission(i);
+//     if (Wire.endTransmission() == 0) {
+//       Serial.print("Found address: ");
+//       Serial.print(i, DEC);
+//       Serial.print(" (0x");
+//       Serial.print(i, HEX);
+//       Serial.println(")");
+//       count++;
+//       delay(1);
+//     }
+//   }
+//   Serial.println("Done.");
+//   Serial.print("Found ");
+//   Serial.print(count, DEC);
+//   Serial.println(" device(s).");
+//   // Wire.beginTransmission(12);
+//   // Wire.write(0x00);
+//   // Wire.endTransmission(true);
+//   // Wire.read();
+// }
+
+// void loop() {}
 
 #define WATCHDOG_TIMEOUT 1000000
 IntervalTimer Watchdog;
@@ -170,36 +209,3 @@ void loop()
   Watchdog.update();
 #endif
 }
-// #include "arduino.h"
-// #include <Wire.h>
-
-// void setup() {
-//   Serial.begin(9600);
-//   while (!Serial) { }
-//   Serial.println();
-//   Serial.println("I2C scanner. Scanning ...");
-//   byte count = 0;
-//   Wire.begin();
-//   // for (byte i = 8; i < 120; i++) {
-//   //   Wire.beginTransmission(i);
-//   //   if (Wire.endTransmission() == 0) {
-//   //     Serial.print("Found address: ");
-//   //     Serial.print(i, DEC);
-//   //     Serial.print(" (0x");
-//   //     Serial.print(i, HEX);
-//   //     Serial.println(")");
-//   //     count++;
-//   //     delay(1);
-//   //   }
-//   // }
-//   // Serial.println("Done.");
-//   // Serial.print("Found ");
-//   // Serial.print(count, DEC);
-//   // Serial.println(" device(s).");
-//   Wire.beginTransmission(12);
-//   Wire.write(0x00);
-//   Wire.endTransmission(true);
-//   Wire.read();
-// }
-
-// void loop() {}
