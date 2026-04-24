@@ -22,18 +22,34 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include "Ian8742.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
-
+typedef struct {
+    ETH_BufferTypeDef *AppBuff;
+    uint8_t buffer[100]__ALIGNED(32);
+} ETH_AppBuff;
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-
+#ifdef __GNUC__
+#define PUTCHAR_PROTOTYPE int __io_putchar(int ch)
+#else
+#define PUTCHAR_PROTOTYPE int fputc(int ch, FILE *f)
+#endif
 /* USER CODE END PD */
+/* USER CODE BEGIN 0 */
+int __io_putchar(int ch)
+{
+  /* Place your implementation of fputc here */
+  /* e.g. write a character to the USART3 and Loop until the end of transmission */
+  HAL_UART_Transmit(&huart3, (uint8_t *)&ch, 1, 0xFFFF);
+  return ch;
+}
+/* USER CODE END 0 */
 
 /* Private macro -------------------------------------------------------------*/
 /* USER CODE BEGIN PM */
@@ -66,12 +82,20 @@ static void MX_I2C3_Init(void);
 static void MX_FLASH_Init(void);
 static void MX_USART3_UART_Init(void);
 /* USER CODE BEGIN PFP */
-
+int32_t ETH_PHY_INTERFACE_Init(void);
+int32_t ETH_PHY_INTERFACE_DeInit (void);
+int32_t ETH_PHY_INTERFACE_ReadReg(uint32_t DevAddr, uint32_t RegAddr, uint32_t *pRegVal);
+int32_t ETH_PHY_INTERFACE_WriteReg(uint32_t DevAddr, uint32_t RegAddr, uint32_t RegVal);
+int32_t ETH_PHY_INTERFACE_GetTick(void);
 /* USER CODE END PFP */
-
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-
+lan8742_Object_t LAN8742;
+lan8742_IOCtx_t  LAN8742_IOCtx = {ETH_PHY_INTERFACE_Init,
+                                  ETH_PHY_INTERFACE_DeInit,
+                                  ETH_PHY_INTERFACE_WriteReg,
+                                  ETH_PHY_INTERFACE_ReadReg,
+                                  ETH_PHY_INTERFACE_GetTick};
 /* USER CODE END 0 */
 
 /**
@@ -230,7 +254,23 @@ static void MX_ETH_Init(void)
   TxConfig.ChecksumCtrl = ETH_CHECKSUM_IPHDR_PAYLOAD_INSERT_PHDR_CALC;
   TxConfig.CRCPadCtrl = ETH_CRC_PAD_INSERT;
   /* USER CODE BEGIN ETH_Init 2 */
-
+  /* Set PHY IO functions */
+  LAN8742_RegisterBusIO(&LAN8742, &LAN8742_IOCtx);
+  /* Initialize the LAN8742 ETH PHY */
+  LAN8742_Init(&LAN8742);
+  /* Initialize link speed negotiation and start Ethernet peripheral */
+  ETH_StartLink();
+  
+  void HAL_ETH_TxCpltCallback(ETH_HandleTypeDef * heth)
+{
+  printf("Packet Transmitted successfully!\r\n");
+  fflush(0);
+}
+void HAL_ETH_RxCpltCallback(ETH_HandleTypeDef * heth)
+{
+  printf("Packet Received successfully!\r\n");
+  fflush(0);
+}
   /* USER CODE END ETH_Init 2 */
 
 }
@@ -422,7 +462,124 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
-
+int32_t ETH_PHY_INTERFACE_Init(void)
+{
+  /* Configure the MDIO Clock */
+  HAL_ETH_SetMDIOClockRange(&heth);
+  return 0;
+}
+int32_t ETH_PHY_INTERFACE_DeInit (void)
+{
+  return 0;
+}
+int32_t ETH_PHY_INTERFACE_ReadReg(uint32_t DevAddr, uint32_t RegAddr, uint32_t *pRegVal)
+{
+  if(HAL_ETH_ReadPHYRegister(&heth, DevAddr, RegAddr, pRegVal) != HAL_OK)
+  {
+    return -1;
+  }
+  return 0;
+}
+int32_t ETH_PHY_INTERFACE_WriteReg(uint32_t DevAddr, uint32_t RegAddr, uint32_t RegVal)
+{
+  if(HAL_ETH_WritePHYRegister(&heth, DevAddr, RegAddr, RegVal) != HAL_OK)
+  {
+    return -1;
+  }
+  return 0;
+}
+int32_t ETH_PHY_INTERFACE_GetTick(void)
+{
+  return HAL_GetTick();
+}
+void ETH_StartLink()
+{
+  ETH_MACConfigTypeDef MACConf = {0};
+  int32_t PHYLinkState = 0U;
+  uint32_t linkchanged = 0U, speed = 0U, duplex =0U;
+  PHYLinkState = LAN8742_GetLinkState(&LAN8742);
+  if(PHYLinkState <= LAN8742_STATUS_LINK_DOWN)
+  {
+    HAL_ETH_Stop(&heth);
+  }
+  else if(PHYLinkState > LAN8742_STATUS_LINK_DOWN)
+  {
+    switch (PHYLinkState)
+    {
+    case LAN8742_STATUS_100MBITS_FULLDUPLEX:
+      duplex = ETH_FULLDUPLEX_MODE;
+      speed = ETH_SPEED_100M;
+      linkchanged = 1;
+      break;
+    case LAN8742_STATUS_100MBITS_HALFDUPLEX:
+      duplex = ETH_HALFDUPLEX_MODE;
+      speed = ETH_SPEED_100M;
+      linkchanged = 1;
+      break;
+    case LAN8742_STATUS_10MBITS_FULLDUPLEX:
+      duplex = ETH_FULLDUPLEX_MODE;
+      speed = ETH_SPEED_10M;
+      linkchanged = 1;
+      break;
+    case LAN8742_STATUS_10MBITS_HALFDUPLEX:
+      duplex = ETH_HALFDUPLEX_MODE;
+      speed = ETH_SPEED_10M;
+      linkchanged = 1;
+      break;
+    default:
+      break;
+    }
+    if(linkchanged)
+    {
+      HAL_ETH_GetMACConfig(&heth, &MACConf);
+      MACConf.DuplexMode = duplex;
+      MACConf.Speed = speed;
+      MACConf.DropTCPIPChecksumErrorPacket = DISABLE;
+      MACConf.ForwardRxUndersizedGoodPacket = ENABLE;
+      HAL_ETH_SetMACConfig(&heth, &MACConf);
+      HAL_ETH_Start_IT(&heth);  
+      }
+  }
+}
+void HAL_ETH_RxAllocateCallback(uint8_t ** buff) {
+  ETH_BufferTypeDef * p = malloc(100);
+  if (p)
+  {
+    * buff = (uint8_t * ) p + offsetof(ETH_AppBuff, buffer);
+    p -> next = NULL;
+    p -> len = 100;
+  } else {
+    * buff = NULL;
+  }
+}
+void HAL_ETH_RxLinkCallback(void ** pStart, void ** pEnd, uint8_t * buff, uint16_t Length)
+{
+  ETH_BufferTypeDef ** ppStart = (ETH_BufferTypeDef ** ) pStart;
+  ETH_BufferTypeDef ** ppEnd = (ETH_BufferTypeDef ** ) pEnd;
+  ETH_BufferTypeDef * p = NULL;
+  p = (ETH_BufferTypeDef * )(buff - offsetof(ETH_AppBuff, buffer));
+  p -> next = NULL;
+  p -> len = 100;
+  if (! * ppStart)
+  {
+    * ppStart = p;
+  } else
+  {
+    ( * ppEnd) -> next = p;
+  }
+  * ppEnd = p;
+}
+void HAL_ETH_RxAllocateCallback(uint8_t ** buff) {
+  ETH_BufferTypeDef * p = malloc(100);
+  if (p)
+  {
+    * buff = (uint8_t * ) p + offsetof(ETH_AppBuff, buffer);
+    p -> next = NULL;
+    p -> len = 100;
+  } else {
+    * buff = NULL;
+  }
+}
 /* USER CODE END 4 */
 
  /* MPU Configuration */
