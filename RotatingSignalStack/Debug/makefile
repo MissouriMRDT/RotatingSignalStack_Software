@@ -9,7 +9,7 @@ RM := rm -rf
 
 # All of the sources participating in the build are defined here
 -include sources.mk
--include Drivers/STM32H5xx_HAL_Driver/Src/subdir.mk
+-include Drivers/STM32H5xx_HAL_Driver/subdir.mk
 -include Core/Startup/subdir.mk
 -include Core/Src/subdir.mk
 -include objects.mk
@@ -61,7 +61,7 @@ main-build: RotatingSignalStack.elf secondary-outputs
 
 # Tool invocations
 RotatingSignalStack.elf RotatingSignalStack.map: $(OBJS) $(USER_OBJS) C:\Users\fanta\OneDrive\Documents\GitHub\RotatingSignalStack_Software\RotatingSignalStack\STM32H562RITX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
-	arm-none-eabi-gcc -o "RotatingSignalStack.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m33 -T"C:\Users\fanta\OneDrive\Documents\GitHub\RotatingSignalStack_Software\RotatingSignalStack\STM32H562RITX_FLASH.ld" --specs=nosys.specs -Wl,-Map="RotatingSignalStack.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv5-sp-d16 -mfloat-abi=hard -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
+	arm-none-eabi-gcc -o "RotatingSignalStack.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m33 -T"C:\Users\fanta\OneDrive\Documents\GitHub\RotatingSignalStack_Software\RotatingSignalStack\STM32H562RITX_FLASH.ld" --specs=nosys.specs -Wl,-Map="RotatingSignalStack.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv5-sp-d16 -mfloat-abi=hard -mthumb -u _printf_float -Wl,--start-group -lc -lm -Wl,--end-group
 	@echo 'Finished building target: $@'
 	@echo ' '
 

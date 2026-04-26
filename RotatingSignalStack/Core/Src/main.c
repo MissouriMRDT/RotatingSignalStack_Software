@@ -4,16 +4,6 @@
   * @file           : main.c
   * @brief          : Main program body
   ******************************************************************************
-  * @attention
-  *
-  * Copyright (c) 2026 STMicroelectronics.
-  * All rights reserved.
-  *
-  * This software is licensed under terms that can be found in the LICENSE file
-  * in the root directory of this software component.
-  * If no LICENSE file comes with this software, it is provided AS-IS.
-  *
-  ******************************************************************************
   */
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
@@ -21,28 +11,34 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include <stdio.h>
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
-
+// Externs must be here so the compiler sees HAL types defined in main.h first
+extern I2C_HandleTypeDef hi2c3;
+//extern UART_HandleTypeDef huart2;
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-
+#define TMAG_ADDR (0x35 << 1)
+#define REG_DEVICE_CONFIG_2  0x01
+#define REG_SENSOR_CONFIG_1  0x02
+#define REG_ANGLE_RESULT_MSB 0x19
+#define REG_ANGLE_RESULT_LSB 0x1A
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
 /* USER CODE BEGIN PM */
-
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
 
-/* USER CODE BEGIN PV */
+I2C_HandleTypeDef hi2c3;
 
+/* USER CODE BEGIN PV */
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -50,23 +46,15 @@ void SystemClock_Config(void);
 static void MPU_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_ICACHE_Init(void);
+static void MX_I2C3_Init(void);
 /* USER CODE BEGIN PFP */
-//compass
-#define VERSION_STR_LENG 35
-#define SAMPLE_TIME 20 /* Set sample timer overflow to 20 ms (i.e.: 50 Hz) */
-
-/* Initialization */
-volatile uint32_t timestamp = 0; /* Increments when sample timeroverflows */
-
-char lib_version[VERSION_STR_LENG];
-
-/* Magnetometer calibration API initialization function */
-MotionMC_Initialize(SAMPLE_TIME, 1);
+void TMAG5273_Init(void);
+float TMAG5273_GetAngle(void);
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-
+float current_heading = 0;
 /* USER CODE END 0 */
 
 /**
@@ -102,29 +90,30 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_ICACHE_Init();
+  MX_I2C3_Init();
   /* USER CODE BEGIN 2 */
-
+  TMAG5273_Init();
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
+  HAL_StatusTypeDef res;
+  for(uint16_t i = 0; i < 128; i++) {
+      res = HAL_I2C_IsDeviceReady(&hi2c3, (uint16_t)(i<<1), 3, 5);
+      if(res == HAL_OK) {
+          HAL_Delay(1); // <--- DOUBLE CLICK THE BLUE MARGIN HERE TO SET BREAKPOINT
+      }
+  }
   while (1)
   {
-	  //pushbuttons
-	  if (HAL_GPIO_ReadPin(JOG_A_GPIO_Port, JOG_A_Pin) == GPIO_PIN_RESET)
-	      {
-	          // move motor one direction
-	      }
-	  else if (HAL_GPIO_ReadPin(JOG_B_GPIO_Port, JOG_B_Pin) == GPIO_PIN_RESET){
-		  //opposite direction
-	  }
-	  if (HAL_GPIO_ReadPin(ALIGN_GPIO_Port, ALIGN_Pin) == GPIO_PIN_RESET){
-		  //point north
-	  }
+      //float current_heading = TMAG5273_GetAngle();
 
-	  //compass
+      // Print heading to ST-LINK Serial Console
+      //printf("Current Antenna Heading: %.2f degrees\r\n", current_heading);
 
-
+      //HAL_Delay(100);
+	  current_heading = 0; // Update the global variable
+	  HAL_Delay(100);
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -179,6 +168,54 @@ void SystemClock_Config(void)
   /** Configure the programming delay
   */
   __HAL_FLASH_SET_PROGRAM_DELAY(FLASH_PROGRAMMING_DELAY_0);
+}
+
+/**
+  * @brief I2C3 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_I2C3_Init(void)
+{
+
+  /* USER CODE BEGIN I2C3_Init 0 */
+
+  /* USER CODE END I2C3_Init 0 */
+
+  /* USER CODE BEGIN I2C3_Init 1 */
+
+  /* USER CODE END I2C3_Init 1 */
+  hi2c3.Instance = I2C3;
+  hi2c3.Init.Timing = 0x00707CBB;
+  hi2c3.Init.OwnAddress1 = 0;
+  hi2c3.Init.AddressingMode = I2C_ADDRESSINGMODE_7BIT;
+  hi2c3.Init.DualAddressMode = I2C_DUALADDRESS_DISABLE;
+  hi2c3.Init.OwnAddress2 = 0;
+  hi2c3.Init.OwnAddress2Masks = I2C_OA2_NOMASK;
+  hi2c3.Init.GeneralCallMode = I2C_GENERALCALL_DISABLE;
+  hi2c3.Init.NoStretchMode = I2C_NOSTRETCH_DISABLE;
+  if (HAL_I2C_Init(&hi2c3) != HAL_OK)
+  {
+    Error_Handler();
+  }
+
+  /** Configure Analogue filter
+  */
+  if (HAL_I2CEx_ConfigAnalogFilter(&hi2c3, I2C_ANALOGFILTER_ENABLE) != HAL_OK)
+  {
+    Error_Handler();
+  }
+
+  /** Configure Digital filter
+  */
+  if (HAL_I2CEx_ConfigDigitalFilter(&hi2c3, 0) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN I2C3_Init 2 */
+
+  /* USER CODE END I2C3_Init 2 */
+
 }
 
 /**
@@ -243,29 +280,50 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(JOG_B_GPIO_Port, &GPIO_InitStruct);
 
-  /*Configure GPIO pin : PC9 */
-  GPIO_InitStruct.Pin = GPIO_PIN_9;
-  GPIO_InitStruct.Mode = GPIO_MODE_AF_OD;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  GPIO_InitStruct.Alternate = GPIO_AF4_I2C3;
-  HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
-
-  /*Configure GPIO pin : PA8 */
-  GPIO_InitStruct.Pin = GPIO_PIN_8;
-  GPIO_InitStruct.Mode = GPIO_MODE_AF_OD;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  GPIO_InitStruct.Alternate = GPIO_AF4_I2C3;
-  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
-
   /* USER CODE BEGIN MX_GPIO_Init_2 */
 
   /* USER CODE END MX_GPIO_Init_2 */
 }
 
 /* USER CODE BEGIN 4 */
+/**
+ * @brief Redirects printf to UART via ST-LINK Virtual COM Port
+ */
+int __io_putchar(int ch) {
+	// You need an active UART handle here!
+	//extern UART_HandleTypeDef huart2;
+	//HAL_UART_Transmit(&huart2, (uint8_t *)&ch, 1, HAL_MAX_DELAY);
+    return ch;
+}
 
+/**
+ * @brief Initializes TMAG5273 CORDIC engine for 360-degree tracking
+ */
+void TMAG5273_Init() {
+    uint8_t config;
+
+    // 1. Set Continuous Measure Mode (DEVICE_CONFIG_2)
+    config = 0x02;
+    HAL_I2C_Mem_Write(&hi2c3, TMAG_ADDR, REG_DEVICE_CONFIG_2, 1, &config, 1, 100);
+
+    // 2. Enable X-Y Angle Calculation (SENSOR_CONFIG_1)
+    config = (0x01 << 2);
+    HAL_I2C_Mem_Write(&hi2c3, TMAG_ADDR, REG_SENSOR_CONFIG_1, 1, &config, 1, 100);
+}
+
+/**
+ * @brief Reads 13-bit angle from sensor and converts to float degrees
+ */
+float TMAG5273_GetAngle() {
+    uint8_t data[2];
+    if(HAL_I2C_Mem_Read(&hi2c3, TMAG_ADDR, REG_ANGLE_RESULT_MSB, 1, data, 2, 100) == HAL_OK) {
+        // MSB [12:5], LSB [4:0] (plus fractional bits)
+        uint16_t raw_angle = ((uint16_t)data[0] << 8) | data[1];
+        // Per datasheet Section 8.1.26: divide by 16 to get degrees
+        return (float)raw_angle / 16.0f;
+    }
+    return -1.0f;
+}
 /* USER CODE END 4 */
 
  /* MPU Configuration */
