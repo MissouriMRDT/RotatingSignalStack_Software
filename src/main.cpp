@@ -26,6 +26,7 @@
 AK8975 mag(0x0C);
 int16_t mx, my, mz;
 float heading;
+const int outputPin = 1; // Use any PWM-capable pin
 
 RoveCommPacket packet;
 RoveCommEthernet RoveComm;
@@ -109,12 +110,12 @@ void setup()
   Serial.println("Testing device connections...");
   Serial.println(mag.testConnection() ? "AK8975 connection successful" : "AK8975 connection failed");
 
-  pinMode(LED_BUILTIN, OUTPUT);
-  pinMode(DIR_PIN, OUTPUT);
-  digitalWrite(DIR_PIN, HIGH);
-  pinMode(STP_PIN, OUTPUT);
+  // pinMode(LED_BUILTIN, OUTPUT);
+  // pinMode(DIR_PIN, OUTPUT);
+  // digitalWrite(DIR_PIN, HIGH);
+  // pinMode(STP_PIN, OUTPUT);
 
-  analogWriteFrequency(STP_PIN, 100);
+  // analogWriteFrequency(STP_PIN, 100);
 #if ARDUINO_WIZNET_5500_EVB_PICO
   analogWriteRange(255);
 #endif
@@ -124,6 +125,14 @@ void setup()
   Serial.println("RoveComm Initializing...");
   RoveComm.begin(RC_SIGNALSTACKBOARD_IPADDRESS);
   Serial.println("Complete");
+
+  pinMode(outputPin, OUTPUT);
+
+  // Set frequency to 32 Hz
+  analogWriteFrequency(outputPin, 16);
+
+  // 50% duty cycle (out of 256)
+  analogWrite(outputPin, 128);
 }
 
 int32_t position = 0;
@@ -137,131 +146,7 @@ bool closedLoopActive = false;
 
 void loop()
 {
-  RoveComm.read(packet);
-  switch (packet.dataId)
-  {
-  // speed
-  case RC_SIGNALSTACKBOARD_OPENLOOP_DATA_ID:
-  {
-    Serial.print("open loop ");
-    Serial.println(packet.i16data[0]);
-    if (packet.i16data[0] < 0)
-    {
-      analogWriteFrequency(STP_PIN, -packet.i16data[0]);
-      analogWrite(STP_PIN, 128);
-      digitalWrite(DIR_PIN, HIGH);
-    }
-    else if (packet.i16data[0] > 0)
-    {
-      analogWriteFrequency(STP_PIN, packet.i16data[0]);
-      analogWrite(STP_PIN, 128);
-      digitalWrite(DIR_PIN, LOW);
-    }
-    else
-    {
-      analogWrite(STP_PIN, 0);
-    }
-    closedLoopActive = false;
-    feedWatchdog();
-    break;
-  }
-  case RC_SIGNALSTACKBOARD_SETANGLETARGET_DATA_ID:
-  {
-    Serial.print("received: ");
-    Serial.println(packet.fdata[0]);
-    float targetAngle = packet.fdata[0]; // Assuming angle is sent as a float
-    static float currentAngle = 0;
-
-    // 1. Calculate the delta (change) needed
-    float angleToMove = targetAngle - currentAngle;
-
-    // 2. Convert angle to steps (Example: 1.8 degrees per step)
-    // Formula: Steps = Angle / 1.8
-    long stepsToMove = abs(angleToMove) / 1.40625;
-
-    // 3. Set Direction
-    digitalWrite(DIR_PIN, (angleToMove > 0) ? HIGH : LOW);
-
-    // 4. Step execution (Blocking approach for simplicity)
-    // Note: For smoother movement, use the AccelStepper library
-    for (long i = 0; i < stepsToMove; i++)
-    {
-      Serial.print("moving");
-      digitalWrite(STP_PIN, HIGH);
-      delayMicroseconds(2000); // Controls speed
-      digitalWrite(STP_PIN, LOW);
-      delayMicroseconds(2000);
-    }
-
-    // 5. Update state
-    currentAngle = targetAngle;
-    closedLoopActive = true;
-    feedWatchdog();
-    break;
-  }
-  // heading
-  // case RC_SIGNALSTACKBOARD_SETANGLETARGET_DATA_ID:
-  // {
-  //   targetAngle = packet.fdata[0];
-  //   feedWatchdog();
-  //   break;
-  // }
-  // gps
-  case RC_SIGNALSTACKBOARD_SETGPSTARGET_DATA_ID:
-  {
-    // MY LOCATION: 37.951664, -91.777234
-    // PRICE: 37.95388110046358, -91.751811233115
-
-    // ROVER/CHANGING GPS: 37.95180969121836, -91.77626487233822
-    // DELC/SIGNAL GPS: 37.951974771528725, -91.7772764007855
-    roverLat = packet.ddata[0];
-    Serial_printf("roverLat: %.10f\n", packet.ddata[0]);
-    roverLon = packet.ddata[1];
-    Serial_printf("roverLon: %.10f\n", packet.ddata[1]);
-    baseLat = packet.ddata[2];
-    Serial_printf("baseLat: %.10f\n", packet.ddata[2]);
-    baseLon = packet.ddata[3];
-    Serial_printf("baseLon: %.10f\n", packet.ddata[3]);
-
-    mag.getHeading(&mx, &my, &mz);
-
-    // display tab-separated magnetometer x/y/z values
-    Serial.print("mag:\t");
-    Serial.print(mx);
-    Serial.print("\t");
-    Serial.print(my);
-    Serial.print("\t");
-    Serial.print(mz);
-    Serial.print("\t\t");
-
-    // angle from signalstack relative to north
-    float azimuth = DEGTORAD(atan2(mx, my));
-    if (azimuth < 0)
-    {
-      azimuth += 360.0;
-    }
-
-    Serial_printf("angle from signalstack relative to north: %.10f\n", azimuth);
-
-    // angle from signalstack->rover vector relative to north
-    float theta = DEGTORAD(atan2((roverLon - baseLon), (roverLat - baseLat)));
-
-    Serial_printf("angle from signalstack->rover vector relative to north: %.10f\n", theta);
-
-    float differenceAngle = azimuth - theta;
-
-    //
-
-    feedWatchdog();
-    break;
-  }
-  case RC_SIGNALSTACKBOARD_WATCHDOGOVERRIDE_DATA_ID:
-  {
-    watchdogOverride = packet.i8data[0];
-    break;
-  }
-  }
-#if ARDUINO_WIZNET_5500_EVB_PICO
-  Watchdog.update();
-#endif
 }
+#if ARDUINO_WIZNET_5500_EVB_PICO
+// Watchdog.update();
+#endif
