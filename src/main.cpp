@@ -8,14 +8,14 @@
 // the number of steps on your motor
 #define STEPS 200
 #if defined(ARDUINO_TEENSY41)
-#define STP_PIN 15
-#define DIR_PIN 14
+#define DIR_PIN 11
+#define STP_PIN 10
 #define EN_PIN 16
 #define COMPASS_SDA
 #define COMPASS_SCL
 #elif defined(ARDUINO_WIZNET_5500_EVB_PICO)
-#define DIR_PIN 2
-#define STP_PIN 1
+#define DIR_PIN 11
+#define STP_PIN 10
 #define EN_PIN 0
 #define COMPASS_SDA 6
 #define COMPASS_SCL 7
@@ -26,7 +26,7 @@
 AK8975 mag(0x0C);
 int16_t mx, my, mz;
 float heading;
-const int outputPin = 1; // Use any PWM-capable pin
+const int outputPin = 10; // Use any PWM-capable pin
 
 RoveCommPacket packet;
 RoveCommEthernet RoveComm;
@@ -129,12 +129,12 @@ void setup()
   pinMode(outputPin, OUTPUT);
 
   // Set frequency to 32 Hz
-  analogWriteFrequency(outputPin, 16);
+  analogWriteFrequency(outputPin, 8);
 
   // 50% duty cycle (out of 256)
-  analogWrite(outputPin, 128);
+  analogWrite(outputPin, 64);
 }
-
+// square wave 32 Hz 4.5V amplitude 2.25V offset 0V lowlevel and highlevel 50% duty cycle
 int32_t position = 0;
 float_t targetAngle = 0;
 double_t roverLat = 0;
