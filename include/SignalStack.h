@@ -43,8 +43,6 @@ IntervalTimer Watchdog;
 uint8_t watchdogStatus = 0;
 uint8_t watchdogOverride = 0;
 
-int8_t lastDirection = 0;
-
 void feedWatchdog();
 
 void estop();

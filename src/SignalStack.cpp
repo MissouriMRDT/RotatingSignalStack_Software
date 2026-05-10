@@ -79,33 +79,17 @@ void loop()
 
     float absError = abs(error);
     // DEBUG: Print these values to see if the error is actually shrinking!
-    Serial_printf("Target: %.1f | Current: %.1f | Error: %.1f\n", targetAzimuth, currentAzimuth, error);
+    Serial_printf("Target: %f | Current: %f | Error: %f\n", targetAzimuth, currentAzimuth, error);
 
     // 1. DEADZONE: If within 3 degrees, KILL POWER to motor
-    if (abs(error) <= 7)
+    if (abs(error) <= 8)
     {
       controlMotor(0);
-      lastDirection = 0;
     }
     else
     {
-      if (absError > 170.0 && lastDirection != 0)
-      {
-        // Force the error to stay on the side of our current momentum
-        if (lastDirection == 1)
-          error = absError;
-        else
-          error = -absError;
-      }
-      // 2. MOVEMENT: Only calculate speed if outside deadzone
       float kP = 10.0;
       int16_t motorSpeed = (int16_t)(error * kP);
-
-      // // Clamp to a minimum speed so it doesn't just "whine" without moving
-      // if (abs(motorSpeed) < 30)
-      // {
-      //   motorSpeed = (error > 0) ? 30 : -30; // Matches your kP sign
-      // }
 
       controlMotor(motorSpeed);
     }
@@ -138,6 +122,7 @@ float calculateTargetAzimuth(double baseLat, double baseLon, double roverLat, do
 
 void controlMotor(int16_t speed)
 {
+  Serial.printf("controlMotor(%d)\n", speed);
   if (speed == 0)
   {
     analogWrite(STP_PIN, 0);
@@ -213,7 +198,7 @@ float readCompassAzimuth()
   // Antenna direction = Z axis
   // Sideways direction = X axis
   // We use atan2(sideways, forward)
-  float angleRad = atan2(x_cal, z_cal);
+  float angleRad = atan2(x_cal, -z_cal);
 
   float D = angleRad * (180.0 / M_PI);
 
