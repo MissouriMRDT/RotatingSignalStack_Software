@@ -159,6 +159,20 @@ double_t baseLon = 0;
 #define M_PI 3.14159265358979323846
 bool closedLoopActive = false;
 
+void controlMotor(int16_t speed)
+{
+  if (speed == 0)
+  {
+    analogWrite(STP_PIN, 0);
+  }
+  else
+  {
+    digitalWrite(DIR_PIN, (speed < 0) ? HIGH : LOW);
+    analogWriteFrequency(STP_PIN, abs(speed));
+    analogWrite(STP_PIN, 128); // 25% duty cycle
+  }
+}
+
 void loop()
 {
   RoveComm.read(packet);
@@ -167,33 +181,8 @@ void loop()
   {
   case RC_SIGNALSTACKBOARD_OPENLOOP_DATA_ID:
   {
-    int16_t speed = packet.i16data[0];
-    Serial.print("Open loop speed: ");
-    Serial.println(speed);
-
-    if (speed == 0)
-    {
-      analogWrite(STP_PIN, 0); // Stop pulses
-    }
-    else
-    {
-      // Set direction FIRST
-      if (speed < 0)
-      {
-        digitalWrite(DIR_PIN, HIGH);
-        speed = -speed; // Make positive for frequency setting
-      }
-      else
-      {
-        digitalWrite(DIR_PIN, LOW);
-      }
-
-      // Apply frequency and start pulses
-      analogWriteFrequency(STP_PIN, speed);
-      analogWrite(STP_PIN, 128); // 50% duty cycle is usually more stable
-    }
-
     closedLoopActive = false;
+    controlMotor(packet.i16data[0]);
     feedWatchdog();
     break;
   }
@@ -222,6 +211,34 @@ void loop()
     break;
   }
     // do watchdogoverride and telemetry
+  }
+  if (closedLoopActive)
+  {
+    float error = targetAzimuth - currentAzimuth;
+
+    // Find the shortest path (don't spin 350 degrees if you only need to move 10)
+    if (error > 180)
+      error -= 360;
+    if (error < -180)
+      error += 360;
+
+    // P-Control: speed proportional to error
+    float kP = 15.0;
+    int16_t motorSpeed = (int16_t)(error * kP);
+
+    // Stop if we are "close enough" (Deadzone)
+    if (abs(error) < 1.5)
+      motorSpeed = 0;
+
+    controlMotor(motorSpeed);
+  }
+
+  // Send Telemetry back to Base Station at 10Hz
+  static uint32_t lastTele = 0;
+  if (millis() - lastTele > 100)
+  {
+    RoveComm.write(RC_SIGNALSTACKBOARD_COMPASSANGLE_DATA_ID, 1, &currentAzimuth);
+    lastTele = millis();
   }
 }
 #if ARDUINO_WIZNET_5500_EVB_PICO
