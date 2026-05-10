@@ -42,16 +42,20 @@ float calculateTargetAzimuth(double lat1, double lon1, double lat2, double lon2)
 float readCompassAzimuth()
 {
   int16_t mx, my, mz;
-  mag.setMode(AK8975_MODE_SINGLE); // Trigger a read
-  delay(10);                       // Wait for conversion
+  mag.setMode(AK8975_MODE_SINGLE);
+  delay(10);
   mag.getHeading(&mx, &my, &mz);
 
-  // Calculate angle. Note: swap mx/my based on sensor orientation
-  float angle = atan2((float)my, (float)mx) * 180.0 / M_PI;
+  // If antenna is on -Y:
+  // We want the angle of the -Y axis relative to Magnetic North.
+  // Standard atan2(y, x) gives angle of +X.
+  // To get angle of -Y, we use: atan2(-mx, -my)
+  float angle = atan2((float)-mx, (float)-my) * 180.0 / M_PI;
 
   // Normalize to 0-360
   if (angle < 0)
     angle += 360;
+
   return angle;
 }
 
@@ -159,6 +163,8 @@ double_t baseLon = 0;
 #define M_PI 3.14159265358979323846
 bool closedLoopActive = false;
 
+#define MAX_SPEED 350 // Define your hardware limit here
+
 void controlMotor(int16_t speed)
 {
   if (speed == 0)
@@ -167,76 +173,100 @@ void controlMotor(int16_t speed)
   }
   else
   {
+    // 1. Determine direction
     digitalWrite(DIR_PIN, (speed < 0) ? HIGH : LOW);
-    analogWriteFrequency(STP_PIN, abs(speed));
-    analogWrite(STP_PIN, 128); // 25% duty cycle
+
+    // 2. Get absolute value and clamp it to the max speed
+    uint16_t limitedSpeed = abs(speed);
+    limitedSpeed = constrain(limitedSpeed, 0, MAX_SPEED);
+
+    // 3. Set frequency and start pulses
+    analogWriteFrequency(STP_PIN, limitedSpeed);
+    analogWrite(STP_PIN, 128); // 50% duty cycle
   }
 }
 
+uint32_t lastPacketTime = 0;
+
 void loop()
 {
-  RoveComm.read(packet);
+  // 1. Check for new commands from Base Station
+  int packetSize = RoveComm.read(packet);
+
+  if (packetSize > 0)
+    lastPacketTime = millis();
+
+  // 2. Always update where the antenna is currently pointing
   currentAzimuth = readCompassAzimuth();
+
   switch (packet.dataId)
   {
   case RC_SIGNALSTACKBOARD_OPENLOOP_DATA_ID:
-  {
     closedLoopActive = false;
     controlMotor(packet.i16data[0]);
     feedWatchdog();
     break;
-  }
-  case RC_SIGNALSTACKBOARD_SETANGLETARGET_DATA_ID:
-  {
-    // get rover heading
-    closedLoopActive = true;
-    feedWatchdog();
-    break;
-  }
-  case RC_SIGNALSTACKBOARD_SETGPSTARGET_DATA_ID:
-  {
-    // get rover and basestation GPS
-    roverLat = packet.ddata[0];
-    Serial_printf("roverLat: %.10f\n", packet.ddata[0]);
-    roverLon = packet.ddata[1];
-    Serial_printf("roverLon: %.10f\n", packet.ddata[1]);
-    baseLat = packet.ddata[2];
-    Serial_printf("baseLat: %.10f\n", packet.ddata[2]);
-    baseLon = packet.ddata[3];
-    Serial_printf("baseLon: %.10f\n", packet.ddata[3]);
 
+  case RC_SIGNALSTACKBOARD_SETGPSTARGET_DATA_ID:
+    roverLat = packet.ddata[0];
+    roverLon = packet.ddata[1];
+    baseLat = packet.ddata[2];
+    baseLon = packet.ddata[3];
+
+    // Calculate the absolute bearing to the rover
     targetAzimuth = calculateTargetAzimuth(baseLat, baseLon, roverLat, roverLon);
     closedLoopActive = true;
     feedWatchdog();
     break;
+
+  case RC_SIGNALSTACKBOARD_SETANGLETARGET_DATA_ID:
+    // If the basestation sends a direct heading to point at
+    targetAzimuth = packet.fdata[0];
+    closedLoopActive = true;
+    feedWatchdog();
+    break;
   }
-    // do watchdogoverride and telemetry
-  }
+
   if (closedLoopActive)
   {
+    currentAzimuth = readCompassAzimuth();
     float error = targetAzimuth - currentAzimuth;
 
-    // Find the shortest path (don't spin 350 degrees if you only need to move 10)
+    // Shortest path logic
     if (error > 180)
       error -= 360;
     if (error < -180)
       error += 360;
 
-    // P-Control: speed proportional to error
-    float kP = 15.0;
-    int16_t motorSpeed = (int16_t)(error * kP);
+    // DEBUG: Print these values to see if the error is actually shrinking!
+    Serial_printf("Target: %.1f | Current: %.1f | Error: %.1f\n", targetAzimuth, currentAzimuth, error);
 
-    // Stop if we are "close enough" (Deadzone)
-    if (abs(error) < 1.5)
-      motorSpeed = 0;
+    // 1. DEADZONE: If within 3 degrees, KILL POWER to motor
+    if (abs(error) <= 3.0)
+    {
+      controlMotor(0);
+    }
+    else
+    {
+      // 2. MOVEMENT: Only calculate speed if outside deadzone
+      float kP = -10.0;
+      int16_t motorSpeed = (int16_t)(error * kP);
 
-    controlMotor(motorSpeed);
+      // Clamp to a minimum speed so it doesn't just "whine" without moving
+      if (abs(motorSpeed) < 30)
+      {
+        motorSpeed = (error > 0) ? -30 : 30; // Matches your kP sign
+      }
+
+      controlMotor(motorSpeed);
+    }
   }
 
-  // Send Telemetry back to Base Station at 10Hz
+  // 10Hz Telemetry Heartbeat
   static uint32_t lastTele = 0;
   if (millis() - lastTele > 100)
   {
+    // Send back the antenna's current heading so the UI knows where it's pointing
     RoveComm.write(RC_SIGNALSTACKBOARD_COMPASSANGLE_DATA_ID, 1, &currentAzimuth);
     lastTele = millis();
   }
