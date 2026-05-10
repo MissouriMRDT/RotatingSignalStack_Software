@@ -130,7 +130,7 @@ void controlMotor(int16_t speed)
   else
   {
     // 1. Determine direction
-    digitalWrite(DIR_PIN, (speed < 0) ? LOW : HIGH);
+    digitalWrite(DIR_PIN, (speed < 0) ? HIGH : LOW);
 
     // 2. Get absolute value and clamp it to the max speed
     uint16_t limitedSpeed = abs(speed);
@@ -198,7 +198,7 @@ float readCompassAzimuth()
   // Antenna direction = Z axis
   // Sideways direction = X axis
   // We use atan2(sideways, forward)
-  float angleRad = atan2(x_cal, -z_cal);
+  float angleRad = atan2(-x_cal, -z_cal);
 
   float D = angleRad * (180.0 / M_PI);
 
