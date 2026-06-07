@@ -51,15 +51,15 @@
 /*#define HAL_DCACHE_MODULE_ENABLED */
 /*#define HAL_DCMI_MODULE_ENABLED */
 /*#define HAL_DTS_MODULE_ENABLED */
-/*#define HAL_ETH_MODULE_ENABLED */
-/*#define HAL_FDCAN_MODULE_ENABLED */
+#define HAL_ETH_MODULE_ENABLED
+#define HAL_FDCAN_MODULE_ENABLED
 /*#define HAL_FMAC_MODULE_ENABLED */
 /*#define HAL_GTZC_MODULE_ENABLED */
 /*#define HAL_HASH_MODULE_ENABLED */
 /*#define HAL_HCD_MODULE_ENABLED */
 /*#define HAL_IRDA_MODULE_ENABLED */
 /*#define HAL_IWDG_MODULE_ENABLED */
-/*#define HAL_I2C_MODULE_ENABLED */
+#define HAL_I2C_MODULE_ENABLED
 /*#define HAL_I3C_MODULE_ENABLED */
 /*#define HAL_I2S_MODULE_ENABLED */
 /*#define HAL_LPTIM_MODULE_ENABLED */
@@ -104,7 +104,7 @@
   *        (when HSE is used as system clock source, directly or through the PLL).
   */
 #if !defined  (HSE_VALUE)
-  #define HSE_VALUE    25000000U /*!< Value of the External oscillator in Hz */
+  #define HSE_VALUE    50000000U /*!< Value of the External oscillator in Hz */
 #endif /* HSE_VALUE */
 
 #if !defined  (HSE_STARTUP_TIMEOUT)
@@ -268,6 +268,10 @@
 
 #define USE_SDIO_TRANSCEIVER          0U
 #define SDIO_MAX_IO_NUMBER            7U
+
+/* ################## ETH peripheral configuration ######################### */
+#define ETH_TX_DESC_CNT 4U
+#define ETH_RX_DESC_CNT 4U
 
 /* Includes ----------------------------------------------------------------------------------------------------------*/
 
