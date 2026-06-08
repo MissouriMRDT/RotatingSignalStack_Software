@@ -1,2 +1,2 @@
 # SignalStack_Board_Software
-Embedded software for the rotating signal staci project
+Embedded software for the rotating signal stack project
