@@ -1,0 +1,1 @@
+https://community.st.com/stm32-mcus-60/how-to-use-the-lwip-ethernet-middleware-on-the-stm32h5-series-135644

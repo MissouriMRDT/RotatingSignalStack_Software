@@ -65,8 +65,19 @@ void HAL_MspInit(void)
   /* USER CODE BEGIN MspInit 0 */
 
   /* USER CODE END MspInit 0 */
+  PWREx_AVDTypeDef sConfigAVD = {0};
 
   /* System interrupt init*/
+
+  /** AVD Configuration
+  */
+  sConfigAVD.AVDLevel = PWR_AVDLEVEL_0;
+  sConfigAVD.Mode = PWR_AVD_MODE_NORMAL;
+  HAL_PWREx_ConfigAVD(&sConfigAVD);
+
+  /** Enable the AVD Output
+  */
+  HAL_PWREx_EnableAVD();
 
   /* USER CODE BEGIN MspInit 1 */
 
@@ -97,7 +108,6 @@ void HAL_ETH_MspInit(ETH_HandleTypeDef* heth)
     __HAL_RCC_GPIOB_CLK_ENABLE();
     /**ETH GPIO Configuration
     PC1     ------> ETH_MDC
-    PA0     ------> ETH_CRS
     PA1     ------> ETH_REF_CLK
     PA2     ------> ETH_MDIO
     PA5     ------> ETH_TX_EN
@@ -114,8 +124,7 @@ void HAL_ETH_MspInit(ETH_HandleTypeDef* heth)
     GPIO_InitStruct.Alternate = GPIO_AF11_ETH;
     HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
-    GPIO_InitStruct.Pin = GPIO_PIN_0|GPIO_PIN_1|GPIO_PIN_2|GPIO_PIN_5
-                          |GPIO_PIN_7;
+    GPIO_InitStruct.Pin = GPIO_PIN_1|GPIO_PIN_2|GPIO_PIN_5|GPIO_PIN_7;
     GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
     GPIO_InitStruct.Pull = GPIO_NOPULL;
     GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
@@ -157,7 +166,6 @@ void HAL_ETH_MspDeInit(ETH_HandleTypeDef* heth)
 
     /**ETH GPIO Configuration
     PC1     ------> ETH_MDC
-    PA0     ------> ETH_CRS
     PA1     ------> ETH_REF_CLK
     PA2     ------> ETH_MDIO
     PA5     ------> ETH_TX_EN
@@ -169,8 +177,7 @@ void HAL_ETH_MspDeInit(ETH_HandleTypeDef* heth)
     */
     HAL_GPIO_DeInit(GPIOC, GPIO_PIN_1|GPIO_PIN_4|GPIO_PIN_5);
 
-    HAL_GPIO_DeInit(GPIOA, GPIO_PIN_0|GPIO_PIN_1|GPIO_PIN_2|GPIO_PIN_5
-                          |GPIO_PIN_7);
+    HAL_GPIO_DeInit(GPIOA, GPIO_PIN_1|GPIO_PIN_2|GPIO_PIN_5|GPIO_PIN_7);
 
     HAL_GPIO_DeInit(GPIOB, GPIO_PIN_12|GPIO_PIN_15);
 
