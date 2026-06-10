@@ -1,3 +1,5 @@
 https://community.st.com/stm32-mcus-60/how-to-use-the-lwip-ethernet-middleware-on-the-stm32h5-series-135644
 
 https://github.com/TexasInstruments/ti-ethernet-software/tree/main/rtos_drivers
+
+https://github.com/stm32-hotspot/STM32H7-LwIP-Examples
