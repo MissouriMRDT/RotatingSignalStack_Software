@@ -23,7 +23,8 @@
 #include "lwip/netif.h"
 #include "netif/etharp.h"
 #include "ethernetif.h"
-#include "../Components/lan8742/lan8742.h"
+#include "cy_eth_phy_driver.h"
+#include "main.h"
 #include <string.h>
 
 /* Private typedef -----------------------------------------------------------*/
@@ -59,6 +60,13 @@
   2.b. Rx Buffers must have the same size: ETH_RX_BUFFER_SIZE, this value must
        passed to ETH DMA in the init field (heth.Init.RxBuffLen)
 */
+
+extern ETH_DMADescTypeDef DMARxDscrTab[ETH_RX_DESC_CNT]; /* Ethernet Rx DMA Descriptors */
+extern ETH_DMADescTypeDef DMATxDscrTab[ETH_TX_DESC_CNT]; /* Ethernet Tx DMA Descriptors */
+/* Global Ethernet handle*/
+extern ETH_HandleTypeDef heth;
+extern ETH_TxPacketConfig TxConfig;
+
 typedef enum
 {
   RX_ALLOC_OK       = 0x00,
@@ -120,6 +128,9 @@ static void low_level_init(struct netif *netif)
 {
   uint8_t macaddress[6]= {ETH_MAC_ADDR0, ETH_MAC_ADDR1, ETH_MAC_ADDR2, ETH_MAC_ADDR3, ETH_MAC_ADDR4, ETH_MAC_ADDR5};
 
+  MX_ETH_Init();
+  heth.Instance = ETH;
+
   EthHandle.Instance = ETH;
   EthHandle.Init.MACAddr = macaddress;
   EthHandle.Init.MediaInterface = HAL_ETH_RMII_MODE;
@@ -128,18 +139,18 @@ static void low_level_init(struct netif *netif)
   EthHandle.Init.RxBuffLen = ETH_RX_BUFFER_SIZE;
 
   /* configure ethernet peripheral (GPIOs, clocks, MAC, DMA) */
-  HAL_ETH_Init(&EthHandle);
+  HAL_ETH_Init(&heth);
 
   /* set MAC hardware address length */
   netif->hwaddr_len = ETH_HWADDR_LEN;
 
-  /* set MAC hardware address */
-  netif->hwaddr[0] =  ETH_MAC_ADDR0;
-  netif->hwaddr[1] =  ETH_MAC_ADDR1;
-  netif->hwaddr[2] =  ETH_MAC_ADDR2;
-  netif->hwaddr[3] =  ETH_MAC_ADDR3;
-  netif->hwaddr[4] =  ETH_MAC_ADDR4;
-  netif->hwaddr[5] =  ETH_MAC_ADDR5;
+   /* set MAC hardware address */
+ netif->hwaddr[0] = heth.Init.MACAddr[0];
+ netif->hwaddr[1] = heth.Init.MACAddr[1];
+ netif->hwaddr[2] = heth.Init.MACAddr[2];
+ netif->hwaddr[3] = heth.Init.MACAddr[3];
+ netif->hwaddr[4] = heth.Init.MACAddr[4];
+ netif->hwaddr[5] = heth.Init.MACAddr[5];
 
   /* maximum transfer unit */
   netif->mtu = ETH_MAX_PAYLOAD;
@@ -150,12 +161,6 @@ static void low_level_init(struct netif *netif)
 
   /* Initialize the RX POOL */
   LWIP_MEMPOOL_INIT(RX_POOL);
-
-  /* Set Tx packet config common parameters */
-  memset(&TxConfig, 0 , sizeof(ETH_TxPacketConfig));
-  TxConfig.Attributes = ETH_TX_PACKETS_FEATURES_CSUM | ETH_TX_PACKETS_FEATURES_CRCPAD;
-  TxConfig.ChecksumCtrl = ETH_CHECKSUM_IPHDR_PAYLOAD_INSERT_PHDR_CALC;
-  TxConfig.CRCPadCtrl = ETH_CRC_PAD_INSERT;
 
   /* Set PHY IO functions */
   LAN8742_RegisterBusIO(&LAN8742, &LAN8742_IOCtx);
@@ -220,7 +225,7 @@ static err_t low_level_output(struct netif *netif, struct pbuf *p)
   TxConfig.TxBuffer = Txbuffer;
   TxConfig.pData = p;
 
-  if( HAL_ETH_Transmit(&EthHandle, &TxConfig, ETH_DMA_TRANSMIT_TIMEOUT)== HAL_OK )
+  if( HAL_ETH_Transmit(&heth, &TxConfig, ETH_DMA_TRANSMIT_TIMEOUT)== HAL_OK )
   {
     errval = ERR_OK;
   }
@@ -247,7 +252,7 @@ static struct pbuf * low_level_input(struct netif *netif)
 
   if(RxAllocStatus == RX_ALLOC_OK)
   {
-    HAL_ETH_ReadData(&EthHandle, (void **)&p);
+    HAL_ETH_ReadData(&heth, (void **)&p);
   }
   return p;
 
@@ -432,7 +437,7 @@ int32_t ETH_PHY_IO_Init(void)
   */
 
   /* Configure the MDIO Clock */
-  HAL_ETH_SetMDIOClockRange(&EthHandle);
+  HAL_ETH_SetMDIOClockRange(&heth);
 
   return 0;
 }
@@ -456,7 +461,7 @@ int32_t ETH_PHY_IO_DeInit (void)
   */
 int32_t ETH_PHY_IO_ReadReg(uint32_t DevAddr, uint32_t RegAddr, uint32_t *pRegVal)
 {
-  if(HAL_ETH_ReadPHYRegister(&EthHandle, DevAddr, RegAddr, pRegVal) != HAL_OK)
+  if(HAL_ETH_ReadPHYRegister(&heth, DevAddr, RegAddr, pRegVal) != HAL_OK)
   {
     return -1;
   }
@@ -473,7 +478,7 @@ int32_t ETH_PHY_IO_ReadReg(uint32_t DevAddr, uint32_t RegAddr, uint32_t *pRegVal
   */
 int32_t ETH_PHY_IO_WriteReg(uint32_t DevAddr, uint32_t RegAddr, uint32_t RegVal)
 {
-  if(HAL_ETH_WritePHYRegister(&EthHandle, DevAddr, RegAddr, RegVal) != HAL_OK)
+  if(HAL_ETH_WritePHYRegister(&heth, DevAddr, RegAddr, RegVal) != HAL_OK)
   {
     return -1;
   }
@@ -504,7 +509,7 @@ void ethernet_link_check_state(struct netif *netif)
 
   if(netif_is_link_up(netif) && (PHYLinkState <= LAN8742_STATUS_LINK_DOWN))
   {
-    HAL_ETH_Stop(&EthHandle);
+    HAL_ETH_Stop(&heth);
     netif_set_down(netif);
     netif_set_link_down(netif);
   }
@@ -539,11 +544,11 @@ void ethernet_link_check_state(struct netif *netif)
     if(linkchanged)
     {
       /* Get MAC Config MAC */
-      HAL_ETH_GetMACConfig(&EthHandle, &MACConf);
+      HAL_ETH_GetMACConfig(&heth, &MACConf);
       MACConf.DuplexMode = duplex;
       MACConf.Speed = speed;
-      HAL_ETH_SetMACConfig(&EthHandle, &MACConf);
-      HAL_ETH_Start(&EthHandle);
+      HAL_ETH_SetMACConfig(&heth, &MACConf);
+      HAL_ETH_Start(&heth);
       netif_set_up(netif);
       netif_set_link_up(netif);
     }
