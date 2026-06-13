@@ -17,14 +17,16 @@
   */
 
 /* Includes ------------------------------------------------------------------*/
+#include "../Drivers/CMSIS/Device/ST/STM32H5xx/Include/stm32h563xx.h"
 #include "stm32h5xx_hal.h"
+#include "stm32h5xx.h"
 #include "lwip/opt.h"
 #include "lwip/timeouts.h"
 #include "lwip/netif.h"
 #include "netif/etharp.h"
 #include "ethernetif.h"
-#include "cy_eth_phy_driver.h"
 #include "main.h"
+#include "dp83825.h"
 #include <string.h>
 
 /* Private typedef -----------------------------------------------------------*/
@@ -104,8 +106,8 @@ int32_t ETH_PHY_IO_ReadReg(uint32_t DevAddr, uint32_t RegAddr, uint32_t *pRegVal
 int32_t ETH_PHY_IO_WriteReg(uint32_t DevAddr, uint32_t RegAddr, uint32_t RegVal);
 int32_t ETH_PHY_IO_GetTick(void);
 
-lan8742_Object_t LAN8742;
-lan8742_IOCtx_t  LAN8742_IOCtx = {ETH_PHY_IO_Init,
+DP83825_Object_t DP83825;
+DP83825_IOCtx_t  DP83825_IOCtx = {ETH_PHY_IO_Init,
                                ETH_PHY_IO_DeInit,
                                ETH_PHY_IO_WriteReg,
                                ETH_PHY_IO_ReadReg,
@@ -126,7 +128,7 @@ void pbuf_free_custom(struct pbuf *p);
   */
 static void low_level_init(struct netif *netif)
 {
-  uint8_t macaddress[6]= {ETH_MAC_ADDR0, ETH_MAC_ADDR1, ETH_MAC_ADDR2, ETH_MAC_ADDR3, ETH_MAC_ADDR4, ETH_MAC_ADDR5};
+  uint8_t macaddress[6]= {1, 2, 3, 4, 5, 6};
 
   MX_ETH_Init();
   heth.Instance = ETH;
@@ -163,10 +165,10 @@ static void low_level_init(struct netif *netif)
   LWIP_MEMPOOL_INIT(RX_POOL);
 
   /* Set PHY IO functions */
-  LAN8742_RegisterBusIO(&LAN8742, &LAN8742_IOCtx);
+  DP83825_RegisterBusIO(&DP83825, &DP83825_IOCtx);
 
-  /* Initialize the LAN8742 ETH PHY */
-  if(LAN8742_Init(&LAN8742) != LAN8742_STATUS_OK)
+  /* Initialize the DP83825 ETH PHY */
+  if(DP83825_Init(&DP83825) != DP83825_STATUS_OK)
   {
     netif_set_link_down(netif);
     netif_set_down(netif);
@@ -505,34 +507,34 @@ void ethernet_link_check_state(struct netif *netif)
   int32_t PHYLinkState = 0U;
   uint32_t linkchanged = 0U, speed = 0U, duplex =0U;
 
-  PHYLinkState = LAN8742_GetLinkState(&LAN8742);
+  PHYLinkState = DP83825_GetLinkState(&DP83825);
 
-  if(netif_is_link_up(netif) && (PHYLinkState <= LAN8742_STATUS_LINK_DOWN))
+  if(netif_is_link_up(netif) && (PHYLinkState <= DP83825_STATUS_LINK_DOWN))
   {
     HAL_ETH_Stop(&heth);
     netif_set_down(netif);
     netif_set_link_down(netif);
   }
-  else if(!netif_is_link_up(netif) && (PHYLinkState > LAN8742_STATUS_LINK_DOWN))
+  else if(!netif_is_link_up(netif) && (PHYLinkState > DP83825_STATUS_LINK_DOWN))
   {
     switch (PHYLinkState)
     {
-    case LAN8742_STATUS_100MBITS_FULLDUPLEX:
+    case DP83825_STATUS_100MBITS_FULLDUPLEX:
       duplex = ETH_FULLDUPLEX_MODE;
       speed = ETH_SPEED_100M;
       linkchanged = 1;
       break;
-    case LAN8742_STATUS_100MBITS_HALFDUPLEX:
+    case DP83825_STATUS_100MBITS_HALFDUPLEX:
       duplex = ETH_HALFDUPLEX_MODE;
       speed = ETH_SPEED_100M;
       linkchanged = 1;
       break;
-    case LAN8742_STATUS_10MBITS_FULLDUPLEX:
+    case DP83825_STATUS_10MBITS_FULLDUPLEX:
       duplex = ETH_FULLDUPLEX_MODE;
       speed = ETH_SPEED_10M;
       linkchanged = 1;
       break;
-    case LAN8742_STATUS_10MBITS_HALFDUPLEX:
+    case DP83825_STATUS_10MBITS_HALFDUPLEX:
       duplex = ETH_HALFDUPLEX_MODE;
       speed = ETH_SPEED_10M;
       linkchanged = 1;
