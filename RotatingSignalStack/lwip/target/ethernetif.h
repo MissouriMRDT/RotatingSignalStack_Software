@@ -20,8 +20,8 @@
 #define __ETHERNETIF_H__
 
 
-#include "lwip/err.h"
-#include "lwip/netif.h"
+#include "err.h"
+#include "netif.h"
 
 /* Exported types ------------------------------------------------------------*/
 err_t ethernetif_init(struct netif *netif);

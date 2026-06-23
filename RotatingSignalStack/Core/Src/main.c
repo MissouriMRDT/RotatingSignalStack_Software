@@ -25,13 +25,13 @@
 /* USER CODE BEGIN Includes */
 #include "lwip.h"
 #include "ethernetif.h"
-#include "lwip/opt.h"
-#include "lwip/init.h"
-#include "netif/etharp.h"
-#include "lwip/netif.h"
-#include "lwip/timeouts.h"
+#include "opt.h"
+#include "init.h"
+#include "etharp.h"
+#include "netif.h"
+#include "timeouts.h"
 #if LWIP_DHCP
-#include "lwip/dhcp.h"
+#include "dhcp.h"
 #endif
 
 /* USER CODE END Includes */
@@ -472,7 +472,7 @@ static void Netif_Config(void) {
 #endif
  /* add the network interface */
  netif_add(&gnetif, &ipaddr, &netmask, &gw, NULL, &ethernetif_init,
- &ethernet_input);
+ &ethernetif_input);
  /* Registers the default network interface */
  netif_set_default(&gnetif);
 #if LWIP_NETIF_LINK_CALLBACK

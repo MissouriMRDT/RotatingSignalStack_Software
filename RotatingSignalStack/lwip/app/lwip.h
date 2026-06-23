@@ -1,4 +1,4 @@
-#include "lwip/netif.h"
+#include "netif.h"
 /*Static IP ADDRESS: IP_ADDR0.IP_ADDR1.IP_ADDR2.IP_ADDR3 */
 #define IP_ADDR0 ((uint8_t) 198U)
 #define IP_ADDR1 ((uint8_t) 162U)

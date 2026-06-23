@@ -49,7 +49,12 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
 
 # Add include paths
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
-    # Add user defined include paths
+    lwip/app
+    src/include/lwip
+    lwip/target
+    system/arch
+    src/include/lwip/priv
+    src/include/lwip/prot/
 )
 
 # Add project symbols (macros)

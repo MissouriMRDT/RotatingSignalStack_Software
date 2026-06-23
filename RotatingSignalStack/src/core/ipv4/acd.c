@@ -70,6 +70,8 @@
 
 #include "lwip/acd.h"
 #include "lwip/prot/acd.h"
+#include <stdint.h>
+#include "adc.h" 
 
 #define ACD_FOREACH(acd, acd_list) for ((acd) = acd_list; (acd) != NULL; (acd) = (acd)->next)
 
