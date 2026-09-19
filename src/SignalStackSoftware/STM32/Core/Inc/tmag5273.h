@@ -5,6 +5,7 @@
  *      Author: Will K
  */
 
+// Documentation: https://www.ti.com/lit/ds/symlink/tmag5273.pdf
 
 /*
  *		Tasks:
