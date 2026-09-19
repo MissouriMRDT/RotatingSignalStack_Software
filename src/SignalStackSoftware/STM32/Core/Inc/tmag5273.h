@@ -8,8 +8,7 @@
 
 /*
  *		Tasks:
- *			EVALSP820-XS (motor driver) register headers
- *
+ *      Test on hardware
  */
 
 
