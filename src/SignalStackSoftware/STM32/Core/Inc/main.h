@@ -49,6 +49,8 @@ extern "C" {
 
 /* USER CODE END EM */
 
+void HAL_TIM_MspPostInit(TIM_HandleTypeDef *htim);
+
 /* Exported functions prototypes ---------------------------------------------*/
 void Error_Handler(void);
 
@@ -69,6 +71,8 @@ void Error_Handler(void);
 #define DRIVER_STEP_CLOCK_GPIO_Port GPIOH
 #define HEARTBEAT_Pin GPIO_PIN_0
 #define HEARTBEAT_GPIO_Port GPIOC
+#define DRIVER_nSTBY_Pin GPIO_PIN_13
+#define DRIVER_nSTBY_GPIO_Port GPIOB
 #define DRIVER_DIRECTION_Pin GPIO_PIN_10
 #define DRIVER_DIRECTION_GPIO_Port GPIOA
 

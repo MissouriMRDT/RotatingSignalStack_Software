@@ -2,14 +2,14 @@
  * tmag5273.h
  *
  *  Created on: Sep 18, 2026
- *      Author: Will K
+ *      Author: jrkin
  */
 
-// Documentation: https://www.ti.com/lit/ds/symlink/tmag5273.pdf
 
 /*
  *		Tasks:
- *        Test on hardware
+ *			EVALSP820-XS (motor driver) register headers
+ *
  */
 
 
