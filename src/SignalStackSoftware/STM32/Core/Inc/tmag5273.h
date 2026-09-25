@@ -2,7 +2,7 @@
  * tmag5273.h
  *
  *  Created on: Sep 18, 2026
- *      Author: jrkin
+ *      Author: Will K
  */
 
 
