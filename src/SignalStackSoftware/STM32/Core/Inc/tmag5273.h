@@ -6,13 +6,6 @@
  */
 
 
-/*
- *		Tasks:
- *			EVALSP820-XS (motor driver) register headers
- *
- */
-
-
 #ifndef TMAG5273_H_
 #define TMAG5273_H_
 
