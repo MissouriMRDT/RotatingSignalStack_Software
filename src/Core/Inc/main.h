@@ -67,8 +67,6 @@ void Error_Handler(void);
 #define DRIVER_M1_GPIO_Port GPIOC
 #define DRIVER_M2_Pin GPIO_PIN_0
 #define DRIVER_M2_GPIO_Port GPIOH
-#define DRIVER_STEP_CLOCK_Pin GPIO_PIN_1
-#define DRIVER_STEP_CLOCK_GPIO_Port GPIOH
 #define HEARTBEAT_Pin GPIO_PIN_0
 #define HEARTBEAT_GPIO_Port GPIOC
 #define DRIVER_nSTBY_Pin GPIO_PIN_13

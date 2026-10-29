@@ -2,7 +2,14 @@
  * tmag5273.h
  *
  *  Created on: Sep 18, 2026
- *      Author: Will K
+ *      Author: jrkin
+ */
+
+
+/*
+ *		Tasks:
+ *			EVALSP820-XS (motor driver) register headers
+ *
  */
 
 
